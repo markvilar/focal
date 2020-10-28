@@ -6,9 +6,11 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-numpy = "*"
+cython = ">=0.26"
+numpy = ">=1.13"
 opencv-python = "4.4.0"
-opencv-contrib-python = "*"
+pyopengl = "*"
+pyzed = {path = "./scripts/pyzed-3.2-cp38-cp38-linux_x86_64.whl"}
 
 [requires]
 python_version = "3.8"
