@@ -5,7 +5,7 @@ import sys
 import cv2
 import pyzed.sl as sl
 
-from utilities import progress_bar
+from ../common/utilities import progress_bar
 
 class Format(enum.Enum):
 	Default = 1
@@ -30,7 +30,8 @@ class SVOFormatter:
 
 		self.svo_file = svo_file
 		self.root = root + '/' \
-			+ os.path.splitext(os.path.split(svo_file)[-1])[0]
+			+ os.path.splitext(os.path.split(svo_file)[-1])[0] \
+			+ '/'
 		os.makedirs(self.root)
 
 		print("{:15} {:>}".format("SVO Input: ", self.svo_file))
@@ -58,8 +59,6 @@ class SVOFormatter:
 		image_formatter = ImageFormatter(self.root, zed)
 		image_formatter.format()
 
-		
-
 		zed.close()
 
 class InformationFormatter(object):
@@ -73,7 +72,7 @@ class InformationFormatter(object):
 			self.info.calibration_parameters_raw.right_cam
 
 	def format(self):
-		info_file_path = self.root + '/camera_information.txt'
+		info_file_path = self.root + 'camera_information.txt'
 		info_file = open(info_file_path, "w")
 		info_file.write("Camera\n")
 		info_file.write("{:15s} {:>10s}\n".format(
@@ -118,29 +117,22 @@ class InformationFormatter(object):
 
 class ImageFormatter(object):
 	def __init__(self, root: str, camera: sl.Camera, fill: int=8):
-		self.root = root
+		assert root[-1] == '/', "Root directory must end with '/'."
 		self.fill = fill
 		self.camera = camera
 
 		self.paths = dict()
-		self.paths['left'] = self.root + '/left'
-		self.paths['right'] = self.root + '/right'
-		self.paths['left_unrectified'] = self.root \
-			+ '/left_unrectified'
-		self.paths['right_unrectified'] = self.root \
-			+ '/right_unrectified'
+		self.paths['root'] = root
+		self.paths['left'] = root + 'left/'
+		self.paths['right'] = root + 'right/'
 			
 		os.makedirs(self.paths['left'], exist_ok=True)
 		os.makedirs(self.paths['right'], exist_ok=True)
-		os.makedirs(self.paths['left_unrectified'], exist_ok=True)
-		os.makedirs(self.paths['right_unrectified'], exist_ok=True)
 	
 	def format(self):
 		# Image and timestamp conversion.
 		left_image = sl.Mat()
-		left_unrectified_image = sl.Mat()
 		right_image = sl.Mat()
-		right_unrectified_image = sl.Mat()
 		timestamp = sl.Timestamp()
 
 		runtime_params = sl.RuntimeParameters()
@@ -148,18 +140,16 @@ class ImageFormatter(object):
 		n_frames = self.camera.get_svo_number_of_frames()
 
 		sys.stdout.write('Converting SVO...\n')
-		times_file = open(self.root + '/times.txt',"w+")
+		times_file = open(self.paths['root'] + 'times.txt',"w+")
 		while True:
 			if self.camera.grab(runtime_params) \
 				!= sl.ERROR_CODE.SUCCESS:
 				continue
 		
 			svo_position = self.camera.get_svo_position()
-			self.camera.retrieve_image(left_image, sl.VIEW.LEFT)
-			self.camera.retrieve_image(right_image, sl.VIEW.RIGHT)
-			self.camera.retrieve_image(left_unrectified_image, 
+			self.camera.retrieve_image(left_image, 
 				sl.VIEW.LEFT_UNRECTIFIED)
-			self.camera.retrieve_image(right_unrectified_image, 
+			self.camera.retrieve_image(right_image, 
 				sl.VIEW.RIGHT_UNRECTIFIED)
 
 			timestamp = self.camera.get_timestamp(
@@ -169,24 +159,12 @@ class ImageFormatter(object):
 			file_name = '{0}'.format(svo_position) \
 				.zfill(self.fill) + '.png'
 				
-			left_image_file = \
-				self.paths['left'] + '/' + file_name
-			left_unrectified_image_file = \
-				self.paths['left_unrectified'] + '/' \
-				+ file_name
-			right_image_file = \
-				self.paths['right'] + '/' + file_name
-			right_unrectified_image_file = \
-				self.paths['right_unrectified'] + '/' \
-				+ file_name
+			left_image_file = self.paths['left'] + file_name
+			right_image_file = self.paths['right'] + file_name
 
 			# Write to files.
 			cv2.imwrite(left_image_file, left_image.get_data())
 			cv2.imwrite(right_image_file, right_image.get_data())
-			cv2.imwrite(left_unrectified_image_file, 
-				left_unrectified_image.get_data())
-			cv2.imwrite(right_unrectified_image_file, 
-				right_unrectified_image.get_data())
 
 			times_file.write(str(milliseconds) + '\n')
 
