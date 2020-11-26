@@ -2,6 +2,5 @@
 *.swp
 *.swo
 
-# Directories
-**/data/
-**/output/
+# Stereolabs SVO files.
+*.svo
