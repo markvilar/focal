@@ -2,5 +2,6 @@
 *.swp
 *.swo
 
-# Stereolabs SVO files.
+# Video files.
 *.svo
+*.avi

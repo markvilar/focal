@@ -2,10 +2,10 @@ clear;
 clc;
 
 % Variables.
-rootDir = '/home/martin/dev/matlab-calibration/';
+rootDir = '/home/martin/dev/focal/data/';
 squareSize = 25;
 
-nRadialCoefs = 3;
+nRadialCoefs = 2;
 estimateTangential = true;
 estimateSkew = false;
 
@@ -13,16 +13,13 @@ rotationThreshold = 10 * pi / 180;
 translationThreshold = 15;
 
 % Set up dataloaders.
-imageDir = fullfile(rootDir, 'images');
+imageDir = fullfile(rootDir, 'calibration');
 leftImages = imageDatastore(fullfile(imageDir,'left'));
 rightImages = imageDatastore(fullfile(imageDir,'right'));
 
 %Detect the checkerboards.
 [imagePoints, boardSize] = detectCheckerboardPoints(...
      leftImages.Files, rightImages.Files);
- 
-% Image Points: 70 x 2 x 30 x 2
-% nInnerPoints, nCoords, nImages, nCameras
 
 %Specify world coordinates of checkerboard keypoints. The square size is in millimeters.
 worldPoints = generateCheckerboardPoints(boardSize, squareSize);
