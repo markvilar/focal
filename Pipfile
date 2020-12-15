@@ -1,0 +1,16 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+cython = ">=0.26"
+numpy = ">=1.13"
+opencv-python = "4.5.0"
+pyopengl = "*"
+pyzed = {path = "./scripts/pyzed-3.3-cp38-cp38-linux_x86_64.whl"}
+
+[requires]
+python_version = "3.8"
