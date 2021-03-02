@@ -5,3 +5,8 @@
 # Video files.
 *.svo
 *.avi
+
+# Folders
+data/
+figures/
+__pycache__/

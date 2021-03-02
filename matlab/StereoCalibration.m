@@ -1,105 +1,121 @@
 clear;
 clc;
 
-% Variables.
-rootDir = '/home/martin/dev/focal/data/';
-squareSize = 25;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Variables. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-nRadialCoefs = 2;
-estimateTangential = true;
-estimateSkew = false;
+% Input.
+rootDir = '/home/martin/data/tbs-calibration/tbs-calibration-02/';
+subsetDir = 'subset-04/';
+inputDir = strcat(rootDir, subsetDir);
 
-rotationThreshold = 10 * pi / 180;
-translationThreshold = 15;
+% Output
+outputDir = strcat(rootDir, 'subset04-results/');
+parameterFile = 'parameter.txt';
+errorFile = 'calibration-errors.csv';
+parameterPath = strcat(rootDir, parameterFile);
 
-% Set up dataloaders.
-imageDir = fullfile(rootDir, 'calibration');
-leftImages = imageDatastore(fullfile(imageDir,'left'));
-rightImages = imageDatastore(fullfile(imageDir,'right'));
+% Calibration variables.
+optionSimultaneousCalibration = true;
+squareSize = 40; % Square size in millimeters.
+numRadialCoefficients = 2;
+optionTangential = false;
+optionSkew = false;
 
-%Detect the checkerboards.
-[imagePoints, boardSize] = detectCheckerboardPoints(...
+% Display variables.
+optionDisplay = true;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Image dataloaders. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Set up image dataloaders.
+images = imageDatastore(fullfile(inputDir, {'left', 'right'}));
+leftImages = imageDatastore(fullfile(inputDir, 'left', '*.png'));
+rightImages = imageDatastore(fullfile(inputDir, 'right', '*.png'));
+
+% Get image sizes.
+leftImageSize = [size(readimage(leftImages, 1), 1), ...
+    size(readimage(leftImages, 1), 2)];
+rightImageSize = [size(readimage(rightImages, 1), 1), ...
+    size(readimage(rightImages, 1), 2)];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Detect checkerboard. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Detect the checkerboards.
+fprintf('\nDetecting checkerboard points...');
+[imagePoints, boardSize, usedImages] = detectCheckerboardPoints(...
      leftImages.Files, rightImages.Files);
 
-%Specify world coordinates of checkerboard keypoints. The square size is in millimeters.
+% Specify world coordinates of checkerboard keypoints.
 worldPoints = generateCheckerboardPoints(boardSize, squareSize);
 
-%Calibrate the stereo camera system. Here both cameras have the same resolution.
-I = readimage(leftImages,1); 
-imageSize = [size(I, 1), size(I, 2)];
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Calibrate intrinsics of left camera. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Calibrate camera. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[leftCamera, leftImages, leftErrors] = estimateCameraParameters(...
-    squeeze(imagePoints(:, :, :, 1)), worldPoints, ...
-    'EstimateSkew', estimateSkew, ...
-    'EstimateTangentialDistortion', estimateTangential, ...
-    'NumRadialDistortionCoefficients', nRadialCoefs, ...
-    'WorldUnits', 'millimeters', ...
-    'InitialIntrinsicMatrix', [], ...
-    'InitialRadialDistortion', [], ...
-    'ImageSize', imageSize); 
+if (optionSimultaneousCalibration)
+    fprintf('\nCalibrating stereo camera...');
+    [stereoCamera, usedImagePairs, stereoErrors] = ...
+        estimateCameraParameters(imagePoints, worldPoints, ...
+            'EstimateSkew', optionSkew, ...
+            'EstimateTangentialDistortion', optionTangential, ...
+            'NumRadialDistortionCoefficients', numRadialCoefficients, ...
+            'WorldUnits', 'millimeters', ...
+            'InitialIntrinsicMatrix', [], ...
+            'InitialRadialDistortion', [], ...
+            'ImageSize', leftImageSize);
+else
+    fprintf('\nCalibrating left camera intrinsics...');
+    [leftCamera, leftDetection, leftErrors] = estimateCameraParameters(...
+        squeeze(imagePoints(:, :, :, 1)), worldPoints, ...
+        'EstimateSkew', optionSkew, ...
+        'EstimateTangentialDistortion', optionTangential, ...
+        'NumRadialDistortionCoefficients', numRadialCoefficients, ...
+        'WorldUnits', 'millimeters', ...
+        'InitialIntrinsicMatrix', [], ...
+        'InitialRadialDistortion', [], ...
+        'ImageSize', leftImageSize); 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Calibrate intrinsics of the right camera. %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    fprintf('\nCalibrating right camera intrinsics...');
+    [rightCamera, rightDetection, rightErrors] = ....
+        estimateCameraParameters(squeeze(imagePoints(:, :, :, 2)), ...
+        worldPoints, ...
+        'EstimateSkew', optionSkew, ...
+        'EstimateTangentialDistortion', optionTangential, ...
+        'NumRadialDistortionCoefficients', numRadialCoefficients, ...
+        'WorldUnits', 'millimeters', ...
+        'InitialIntrinsicMatrix', [], ...
+        'InitialRadialDistortion', [], ...
+        'ImageSize', rightImageSize);
 
-[rightCamera, rightImages, rightErrors] = estimateCameraParameters(...
-    squeeze(imagePoints(:, :, :, 2)), worldPoints, ...
-    'EstimateSkew', estimateSkew, ...
-    'EstimateTangentialDistortion', estimateTangential, ...
-    'NumRadialDistortionCoefficients', nRadialCoefs, ...
-    'WorldUnits', 'millimeters', ...
-    'InitialIntrinsicMatrix', [], ...
-    'InitialRadialDistortion', [], ...
-    'ImageSize', imageSize);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Calibrate extrinsics of the stereo camera. %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[stereoCamera, ~, stereoErrors] = estimateStereoBaseline(...
-    imagePoints, worldPoints, leftCamera, rightCamera);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Filter out outliers. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-rotationErrors = stereoErrors.Camera1ExtrinsicsErrors.RotationVectorsError;
-translationErrors = stereoErrors.Camera1ExtrinsicsErrors.TranslationVectorsError;
-
-rotationFilter = any(rotationErrors > rotationThreshold, 2);
-translationFilter = any(translationErrors > translationThreshold, 2);
-filter = not(or(rotationFilter, translationFilter));
-
-filteredImagePoints = imagePoints(:, :, filter, :);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%% Calibrate extrinsics of the stereo camera. %%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-[filteredStereoCamera, imagePairs, filteredStereoErrors] = ...
-    estimateStereoBaseline(filteredImagePoints, worldPoints, ...
-    leftCamera, rightCamera);
+    fprintf('\nCalibrating stereo camera extrinsics...');
+    [stereoCamera, usedImagePairs, stereoErrors] = ...
+        estimateStereoBaseline(imagePoints, worldPoints, leftCamera, ...
+            rightCamera);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% Visualize calibration results. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-displayErrors(leftErrors, leftCamera);
+if (optionDisplay)
+    figure;
+    showReprojectionErrors(stereoCamera);
+    figure;
+    showExtrinsics(stereoCamera);
+    shg;
+end
 
-displayErrors(rightErrors, rightCamera);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Save calibration results. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-figure;
-showReprojectionErrors(stereoCamera);
+fprintf('\nSaving calibration results...\n');
+SaveStereoCameraCalibration(outputDir, images, stereoCamera, '/', ...
+    optionDisplay);
 
-figure;
-showReprojectionErrors(filteredStereoCamera);
-
-figure;
-showExtrinsics(stereoCamera);
-
-figure;
-showExtrinsics(filteredStereoCamera);
+%[J1, J2] = rectifyStereoImages(I1, I2, stereoParams);

@@ -105,3 +105,11 @@ class IntrinsicCalibrator(object):
 					cv2.circle(gray_img, (x,y), 3, 
 						(0,0,255), -1)
 		print(n_found)
+
+class ExtrinsicCalibrator(object):
+	def __init__(self, root):
+		self.root = root
+		raise NotImplementedError
+
+	def calibrate(self):
+		raise NotImplementedError

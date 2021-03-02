@@ -1,6 +1,6 @@
 import argparse
 
-from inspector import SVOInspector
+from svo import SVOInspector
 
 def pick_calibration_images(svo_file: str, output_dir: str, start_index: int):
 	inspector = SVOInspector(svo_file, output_dir, start_index)
