@@ -31,8 +31,17 @@ if ~exist(rightRectifiedImageDir, "dir")
 end
 
 % Split images into left and right images.
-leftImages = images.Files(1:2:end, :);
-rightImages = images.Files(2:2:end, :);
+leftImages = {};
+rightImages = {};
+for i = 1:length(images)
+    image = images.Files(i);
+    leftImages.append(image);
+end
+
+numImagePairs = length(images) / 2;
+
+leftImages = images.Files(1:numImagePairs, :);
+rightImages = images.Files(numImagePairs+1:end, :);
 
 assert(length(leftImages) == length(rightImages), ...
     'The number of left and right images are not the same!');
@@ -41,7 +50,7 @@ assert(length(leftImages) == length(rightImages), ...
 
 % Save images.
 reverse = '';
-numImagePairs = length(leftImages);
+
 if (optionDisplay)
     figure;
 end
@@ -56,7 +65,7 @@ for i=1:numImagePairs
     [leftImageName, extension] = ExtractImageName(leftImages{i}, ...
         separator);
     
-    [rightImageName, ~] = ExtractImageName(leftImages{i}, ...
+    [rightImageName, ~] = ExtractImageName(rightImages{i}, ...
         separator);
     
     leftUnrectifiedImage = imread(leftImages{i});
