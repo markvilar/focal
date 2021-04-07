@@ -5,7 +5,7 @@ import sys
 import cv2
 import pyzed.sl as sl
 
-from ../common/utilities import progress_bar
+from utilities import progress_bar
 
 class Format(enum.Enum):
 	Default = 1

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Set up matplotlib style.
-plt.style.use(['project-thesis', 'high-vis'])
+plt.style.use(['Scientific', 'high-vis'])
 
 def position_feature_plotting(path: str):
 	with open(path, newline='') as csvfile:
