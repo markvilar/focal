@@ -7,10 +7,12 @@ verify_ssl = true
 
 [packages]
 cython = ">=0.26"
+matplotlib = "*"
 numpy = ">=1.13"
 opencv-python = "4.5.0"
 pyopengl = "*"
-pyzed = {path = "./scripts/pyzed-3.3-cp38-cp38-linux_x86_64.whl"}
+pyzed = {path = "./lib/pyzed-3.3-cp38-cp38-linux_x86_64.whl"}
+SciencePlots = "*"
 
 [requires]
 python_version = "3.8"
