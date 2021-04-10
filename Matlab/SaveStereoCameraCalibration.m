@@ -34,11 +34,9 @@ assert(length(leftImages.Files) == length(rightImages.Files), ...
     'The number of left and right images are not the same!');
 
 numImagePairs = stereoCamera.NumPatterns;
-numImagePoints = size(stereoCamera.WorldPoints, 1);
 
 % TODO: Save utilized images to txt file.
 
-% Save images.
 reverse = '';
 
 if (optionDisplay)
@@ -102,42 +100,29 @@ for i=1:numImagePairs
 end
 
 % Save camera parameters.
-fprintf('\n - Saving camera parameters...');
-leftCamera = stereoCamera.CameraParameters1;
-rightCamera = stereoCamera.CameraParameters2;
+fprintf('\n - Saving parameters...');
 baseline = stereoCamera.TranslationOfCamera2;
 rotation = rotm2eul(stereoCamera.RotationOfCamera2, 'XYZ');
 
-fprintf('\nBaseline: %f, %f, %f', baseline(1), baseline(2), baseline(3));
-fprintf('\nRotation: %f, %f, %f', rotation(1), rotation(2), rotation(3));
+fprintf('\n    - Baseline: %f, %f, %f', baseline(1), baseline(2), ...
+    baseline(3));
+fprintf('\n    - Rotation: %f, %f, %f', rotation(1), rotation(2), ...
+    rotation(3));
 
 % Save reprojection errors.
-fprintf('\n - Saving reprojection errors...\n');
+fprintf('\n - Saving statistics...\n');
 
-% TODO: Loop over reprojection errors and add index column.
-% reshape(E, [size(E,1)*size(E,3) size(E,2)]);
-leftErrors = stereoCamera.CameraParameters1.ReprojectionErrors;
-rightErrors = stereoCamera.CameraParameters2.ReprojectionErrors;
+[leftReprojectionStatistics, leftExtrinsicStatistics] = ...
+    ExtractCalibrationStatistics(stereoCamera.CameraParameters1);
+[rightReprojectionStatistics, rightExtrinsicStatistics] = ...
+    ExtractCalibrationStatistics(stereoCamera.CameraParameters2);
 
-leftErrorTable = zeros(size(leftErrors,1)*size(leftErrors,3), 4);
-rightErrorTable = zeros(size(rightErrors,1)*size(rightErrors,3), 4);
-
-for i = 1:numImagePairs
-    leftImageErrors = leftErrors(:,:,i);
-    rightImageErrors = rightErrors(:,:,i);
-    pointNumbers = (1:numImagePoints)';
-    imageNumbers = repelem(i, numImagePoints)';
-    
-    offset = (i-1)*numImagePoints;
-    stride = numImagePoints;
-    leftErrorTable(offset+1:offset+stride, :) = ...
-        [imageNumbers, pointNumbers, leftImageErrors];
-    rightErrorTable(offset+1:offset+stride, :) = ...
-        [imageNumbers, pointNumbers, rightImageErrors];
-end
-
-writematrix(leftErrorTable, ...
-    strcat(directory, 'reprojection-errors-left.csv'));
-writematrix(rightErrorTable, ...
-    strcat(directory, 'reprojection-errors-right.csv'));
+writematrix(leftReprojectionStatistics, ...
+    strcat(directory, 'reprojection-statistics-left.csv'));
+writematrix(leftExtrinsicStatistics, ...
+    strcat(directory, 'extrinsic-statistics-left.csv'));
+writematrix(rightReprojectionStatistics, ...
+    strcat(directory, 'reprojection-statistics-right.csv'));
+writematrix(rightExtrinsicStatistics, ...
+    strcat(directory, 'extrinsic-statistics-right.csv'));
 end

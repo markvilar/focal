@@ -9,12 +9,12 @@ clc;
 inputDir = strcat('/home/martin/data/calibration-experiment/', ...
     'sequence-02/subset-04/');
 outputDir = strcat('/home/martin/data/calibration-experiment/', ...
-    'sequence-02/subset-04/results/');
+    'sequence-02/subset-04/results-tangential/');
 
 % Calibration variables.
 squareSize = 40; % Square size in millimeters.
 numRadialCoefficients = 2;
-optionTangential = false;
+optionTangential = true;
 optionSkew = false;
 
 % Display variables.
@@ -25,7 +25,6 @@ optionDisplay = false;
 % -------------------------------------------------------------------------
 
 % Set up image dataloaders.
-images = imageDatastore(fullfile(inputDir, {'left', 'right'}));
 leftImages = imageDatastore(fullfile(inputDir, 'left', '*.png'));
 rightImages = imageDatastore(fullfile(inputDir, 'right', '*.png'));
 
