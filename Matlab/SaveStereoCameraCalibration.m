@@ -1,5 +1,5 @@
-function SaveStereoCameraCalibration(directory, images, stereoCamera, ...
-    separator, optionDisplay)
+function SaveStereoCameraCalibration(directory, leftImages, ...
+    rightImages, stereoCamera, separator, optionDisplay)
 % Undistorts images using the camera model defined by cameraParameters.
 % 
 % :param directory: string, path to the output directory.
@@ -30,21 +30,11 @@ if ~exist(rightRectifiedImageDir, "dir")
     mkdir(rightRectifiedImageDir);
 end
 
-% Split images into left and right images.
-leftImages = {};
-rightImages = {};
-for i = 1:length(images)
-    image = images.Files(i);
-    leftImages.append(image);
-end
-
-numImagePairs = length(images) / 2;
-
-leftImages = images.Files(1:numImagePairs, :);
-rightImages = images.Files(numImagePairs+1:end, :);
-
-assert(length(leftImages) == length(rightImages), ...
+assert(length(leftImages.Files) == length(rightImages.Files), ...
     'The number of left and right images are not the same!');
+
+numImagePairs = stereoCamera.NumPatterns;
+numImagePoints = size(stereoCamera.WorldPoints, 1);
 
 % TODO: Save utilized images to txt file.
 
@@ -54,6 +44,7 @@ reverse = '';
 if (optionDisplay)
     figure;
 end
+
 for i=1:numImagePairs
     % Progress bar.
     percent = 100 * i / numImagePairs;
@@ -62,14 +53,14 @@ for i=1:numImagePairs
     reverse = repmat(sprintf('\b'), 1, length(message));
     
     % Load and undistort image.
-    [leftImageName, extension] = ExtractImageName(leftImages{i}, ...
+    [leftImageName, extension] = ExtractImageName(leftImages.Files{i}, ...
         separator);
     
-    [rightImageName, ~] = ExtractImageName(rightImages{i}, ...
+    [rightImageName, ~] = ExtractImageName(rightImages.Files{i}, ...
         separator);
     
-    leftUnrectifiedImage = imread(leftImages{i});
-    rightUnrectifiedImage = imread(rightImages{i});
+    leftUnrectifiedImage = imread(leftImages.Files{i});
+    rightUnrectifiedImage = imread(rightImages.Files{i});
     
     % Rectify images.
     leftRectifiedImage = undistortImage(leftUnrectifiedImage, ...
@@ -122,8 +113,31 @@ fprintf('\nRotation: %f, %f, %f', rotation(1), rotation(2), rotation(3));
 
 % Save reprojection errors.
 fprintf('\n - Saving reprojection errors...\n');
-writematrix(permute(stereoCamera.CameraParameters1.ReprojectionErrors, ...
-    [3 2 1]), strcat(directory, '/', 'reprojection-errors-left.csv'));
-writematrix(permute(stereoCamera.CameraParameters2.ReprojectionErrors, ...
-    [3 2 1]), strcat(directory, '/', 'reprojection-errors-right.csv'));
+
+% TODO: Loop over reprojection errors and add index column.
+% reshape(E, [size(E,1)*size(E,3) size(E,2)]);
+leftErrors = stereoCamera.CameraParameters1.ReprojectionErrors;
+rightErrors = stereoCamera.CameraParameters2.ReprojectionErrors;
+
+leftErrorTable = zeros(size(leftErrors,1)*size(leftErrors,3), 4);
+rightErrorTable = zeros(size(rightErrors,1)*size(rightErrors,3), 4);
+
+for i = 1:numImagePairs
+    leftImageErrors = leftErrors(:,:,i);
+    rightImageErrors = rightErrors(:,:,i);
+    pointNumbers = (1:numImagePoints)';
+    imageNumbers = repelem(i, numImagePoints)';
+    
+    offset = (i-1)*numImagePoints;
+    stride = numImagePoints;
+    leftErrorTable(offset+1:offset+stride, :) = ...
+        [imageNumbers, pointNumbers, leftImageErrors];
+    rightErrorTable(offset+1:offset+stride, :) = ...
+        [imageNumbers, pointNumbers, rightImageErrors];
+end
+
+writematrix(leftErrorTable, ...
+    strcat(directory, 'reprojection-errors-left.csv'));
+writematrix(rightErrorTable, ...
+    strcat(directory, 'reprojection-errors-right.csv'));
 end

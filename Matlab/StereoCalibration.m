@@ -6,16 +6,10 @@ clc;
 % -------------------------------------------------------------------------
 
 % Input.
-rootDir = strcat('/home/martin/data/', ...
-    'trondheim-biological-station-experiment/sequence-02/');
-subsetDir = 'subset-04/';
-inputDir = strcat(rootDir, subsetDir);
-
-% Output
-outputDir = strcat(rootDir, 'subset04-results/');
-parameterFile = 'parameter.txt';
-errorFile = 'calibration-errors.csv';
-parameterPath = strcat(rootDir, parameterFile);
+inputDir = strcat('/home/martin/data/calibration-experiment/', ...
+    'sequence-02/subset-04/');
+outputDir = strcat('/home/martin/data/calibration-experiment/', ...
+    'sequence-02/subset-04/results/');
 
 % Calibration variables.
 squareSize = 40; % Square size in millimeters.
@@ -86,8 +80,8 @@ end
 % -------------------------------------------------------------------------
 
 fprintf('\nSaving calibration results...\n');
-SaveStereoCameraCalibration(outputDir, images, stereoCamera, '/', ...
-    optionDisplay);
+SaveStereoCameraCalibration(outputDir, leftImages, rightImages, ...
+    stereoCamera, '/', optionDisplay);
 
 % TODO: Rectify the stereo images.
 %[J1, J2] = rectifyStereoImages(I1, I2, stereoParams);
