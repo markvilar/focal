@@ -3,8 +3,8 @@ function [reprojectionStatistics, extrinsicStatistics] = ...
 % Takes a set of camera parameters, extracts calibration statistics and
 % returns them as an array.
 %
-% :arg cameraParameters: cameraParameters object
-% :return: array
+% :arg cameraParameters: cameraParameters object.
+% :return: tuple of arrays, the calibration statistics.
 
 numberOfImages = cameraParameters.NumPatterns;
 numberOfPoints = size(cameraParameters.WorldPoints, 1);

@@ -10,6 +10,6 @@
 *.m~
 
 # Folders
-data/
-figures/
+Data/
+Output/
 __pycache__/

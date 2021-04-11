@@ -1,5 +1,12 @@
+% -------------------------------------------------------------------------
+% ---- Setup --------------------------------------------------------------
+% -------------------------------------------------------------------------
+
 clear;
 clc;
+
+% Suppress warnings.
+warning('off','all')
 
 % -------------------------------------------------------------------------
 % ---- Variables ----------------------------------------------------------
@@ -9,16 +16,17 @@ clc;
 inputDir = strcat('/home/martin/data/calibration-experiment/', ...
     'sequence-02/subset-04/');
 outputDir = strcat('/home/martin/data/calibration-experiment/', ...
-    'sequence-02/subset-04/results-tangential/');
+    'sequence-02/subset-04/results-radial/');
 
 % Calibration variables.
 squareSize = 40; % Square size in millimeters.
-numRadialCoefficients = 2;
-optionTangential = true;
+numRadialCoefficients = 3;
+optionTangential = false;
 optionSkew = false;
 
 % Display variables.
-optionDisplay = false;
+optionDisplayExtrinsics = false;
+optionDisplayImages = false;
 
 % -------------------------------------------------------------------------
 % ---- Image dataloaders --------------------------------------------------
@@ -66,7 +74,7 @@ fprintf('\nCalibrating stereo camera...');
 % ---- Visualize calibration results --------------------------------------
 % -------------------------------------------------------------------------
 
-if (optionDisplay)
+if (optionDisplayExtrinsics)
     figure;
     showReprojectionErrors(stereoCamera);
     figure;
@@ -80,7 +88,4 @@ end
 
 fprintf('\nSaving calibration results...\n');
 SaveStereoCameraCalibration(outputDir, leftImages, rightImages, ...
-    stereoCamera, '/', optionDisplay);
-
-% TODO: Rectify the stereo images.
-%[J1, J2] = rectifyStereoImages(I1, I2, stereoParams);
+    stereoCamera, '/', optionDisplayImages);

@@ -8,23 +8,24 @@ function SaveStereoCameraCalibration(directory, leftImages, ...
 % :param separator: char, the image file separator.
 % :param optionDisplay: bool, display image option.
 
-leftUnrectifiedImageDir = strcat(directory, 'left-unrectified');
+%% Create directories.
+leftUndistortedImageDir = strcat(directory, 'left-undistorted');
 leftRectifiedImageDir = strcat(directory, 'left-rectified');
-rightUnrectifiedImageDir = strcat(directory, 'right-unrectified');
+rightUndistortedImageDir = strcat(directory, 'right-undistorted');
 rightRectifiedImageDir = strcat(directory, 'right-rectified');
 
 % Create directories.
 if ~exist(directory, "dir")
     mkdir(directory);
 end
-if ~exist(leftUnrectifiedImageDir, "dir")
-    mkdir(leftUnrectifiedImageDir);
+if ~exist(leftUndistortedImageDir, "dir")
+    mkdir(leftUndistortedImageDir);
 end
 if ~exist(leftRectifiedImageDir, "dir")
     mkdir(leftRectifiedImageDir);
 end
-if ~exist(rightUnrectifiedImageDir, "dir")
-    mkdir(rightUnrectifiedImageDir);
+if ~exist(rightUndistortedImageDir, "dir")
+    mkdir(rightUndistortedImageDir);
 end
 if ~exist(rightRectifiedImageDir, "dir")
     mkdir(rightRectifiedImageDir);
@@ -34,6 +35,9 @@ assert(length(leftImages.Files) == length(rightImages.Files), ...
     'The number of left and right images are not the same!');
 
 numImagePairs = stereoCamera.NumPatterns;
+
+
+%% Save images.
 
 % TODO: Save utilized images to txt file.
 
@@ -50,66 +54,68 @@ for i=1:numImagePairs
     fprintf([reverse, message]);
     reverse = repmat(sprintf('\b'), 1, length(message));
     
-    % Load and undistort image.
+    % Extract image names.
     [leftImageName, extension] = ExtractImageName(leftImages.Files{i}, ...
         separator);
-    
     [rightImageName, ~] = ExtractImageName(rightImages.Files{i}, ...
         separator);
     
-    leftUnrectifiedImage = imread(leftImages.Files{i});
-    rightUnrectifiedImage = imread(rightImages.Files{i});
+    % Load unrectified images.
+    leftRawImage = imread(leftImages.Files{i});
+    rightRawImage = imread(rightImages.Files{i});
+    
+    % Undistort images.
+    leftUndistortedImage = undistortImage(leftRawImage, ...
+        stereoCamera.CameraParameters1);
+    rightUndistortedImage = undistortImage(rightRawImage, ...
+        stereoCamera.CameraParameters2);
     
     % Rectify images.
-    leftRectifiedImage = undistortImage(leftUnrectifiedImage, ...
-        stereoCamera.CameraParameters1);
-    rightRectifiedImage = undistortImage(rightUnrectifiedImage, ...
-        stereoCamera.CameraParameters2);
+    [leftRectifiedImage, rightRectifiedImage] = rectifyStereoImages(...
+        leftRawImage, rightRawImage, stereoCamera);
     
     % Show images.
     if (optionDisplay)
-        subplot(2, 2, 1);
-        imshow(leftUnrectifiedImage);
-        subplot(2, 2, 3);
+        subplot(3, 2, 1);
+        imshow(leftRawImage);
+        subplot(3, 2, 3);
+        imshow(leftUndistortedImage);
+        subplot(3, 2, 5);
         imshow(leftRectifiedImage);
-        subplot(2, 2, 2);
-        imshow(rightUnrectifiedImage);
-        subplot(2, 2, 4);
+        subplot(3, 2, 2);
+        imshow(rightRawImage);
+        subplot(3, 2, 4);
+        imshow(rightUndistortedImage);
+        subplot(3, 2, 6);
         imshow(rightRectifiedImage);
+        shg;
     end
     
-    % Format image file names.
-    leftUnrectifiedImageName = strcat(leftImageName, '-unrectified', ...
-        '.', extension);
-    leftRectifiedImageName = strcat(leftImageName, '-rectified', ...
-        '.', extension);
-    rightUnrectifiedImageName = strcat(rightImageName, '-unrectified', ...
-        '.', extension);
-    rightRectifiedImageName = strcat(rightImageName, '-rectified', ...
-        '.', extension);
-    
     % Write images.
-    imwrite(leftUnrectifiedImage, strcat(leftUnrectifiedImageDir, ...
-        '/', leftUnrectifiedImageName));
+    imwrite(leftUndistortedImage, strcat(leftUndistortedImageDir, ...
+        "/", leftImageName, "-undistorted", ".", extension));
     imwrite(leftRectifiedImage, strcat(leftRectifiedImageDir, ...
-        '/', leftRectifiedImageName));
-    imwrite(rightUnrectifiedImage, strcat(rightUnrectifiedImageDir, ...
-        '/', rightUnrectifiedImageName));
+        "/", leftImageName, "-rectified", ".", extension));
+    imwrite(rightUndistortedImage, strcat(rightUndistortedImageDir, ...
+        "/", rightImageName, "-undistorted", ".", extension));
     imwrite(rightRectifiedImage, strcat(rightRectifiedImageDir, ...
-        '/', rightRectifiedImageName));
+        "/", rightImageName, "-rectified", ".", extension));
 end
 
-% Save camera parameters.
+%% Save camera parameters.
 fprintf('\n - Saving parameters...');
-baseline = stereoCamera.TranslationOfCamera2;
-rotation = rotm2eul(stereoCamera.RotationOfCamera2, 'XYZ');
 
-fprintf('\n    - Baseline: %f, %f, %f', baseline(1), baseline(2), ...
-    baseline(3));
-fprintf('\n    - Rotation: %f, %f, %f', rotation(1), rotation(2), ...
-    rotation(3));
+% Camera intrinsics.
+WriteIntrinsicsToFile(strcat(directory, 'intrinsics-left.txt'), ...
+    stereoCamera.CameraParameters1.Intrinsics);
+WriteIntrinsicsToFile(strcat(directory, 'intrinsics-right.txt'), ...
+    stereoCamera.CameraParameters2.Intrinsics);
 
-% Save reprojection errors.
+% Stereo extrinsics.
+WriteExtrinsicsToFile(strcat(directory, 'extrinsics.txt'), ...
+    stereoCamera);
+
+%% Save reprojection errors.
 fprintf('\n - Saving statistics...\n');
 
 [leftReprojectionStatistics, leftExtrinsicStatistics] = ...

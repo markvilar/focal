@@ -3,7 +3,6 @@ python /home/martin/dev/Focal/Python/svo_to_avi.py \
 "/home/martin/data/ekne-survey/zed-svo/MS-Helma-01.svo" \
 "/home/martin/data/ekne-survey/zed-avi/test-01.avi" 0
 
-: << 'END'
 python /home/martin/dev/Focal/Python/svo_to_avi.py \
 "/home/martin/data/ekne-survey/zed-svo/MS-Helma-02.svo" \
 "/home/martin/data/ekne-survey/zed-avi/MS-Helma-02.avi" 0
@@ -31,4 +30,3 @@ python /home/martin/dev/Focal/Python/svo_to_avi.py \
 python /home/martin/dev/Focal/Python/svo_to_avi.py \
 "/home/martin/data/ekne-survey/zed-svo/MS-Helma-08.svo" \
 "/home/martin/data/ekne-survey/zed-avi/MS-Helma-08.avi" 0
-END

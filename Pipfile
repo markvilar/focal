@@ -10,6 +10,7 @@ cython = ">=0.26"
 matplotlib = "*"
 numpy = ">=1.13"
 opencv-python = "4.5.0"
+pandas = "*"
 pyopengl = "*"
 pyzed = {path = "/home/martin/dev/Focal/Lib/pyzed-3.3-cp38-cp38-linux_x86_64.whl"}
 pillow = ">=8.1.1"

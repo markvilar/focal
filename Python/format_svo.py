@@ -3,7 +3,7 @@ import cv2
 import pyzed.sl as sl
 import sys
 
-from format import Format, format_from_string, SVOFormatter
+from svo import Format, format_from_string, SVOFormatter
 
 def format_svo(svo_file: str):
 	formatter = SVOFormatter(svo_file)
