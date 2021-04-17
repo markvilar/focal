@@ -1,5 +1,5 @@
-function [reprojectionStatistics, extrinsicStatistics] = ...
-    ExtractCalibrationStatistics(cameraParameters)
+function [reprojectionStatistics, extrinsicStatistics, ...
+    targetStatistics] = ExtractCalibrationStatistics(cameraParameters)
 % Takes a set of camera parameters, extracts calibration statistics and
 % returns them as an array.
 %
@@ -36,5 +36,26 @@ for i = 1:numberOfImages
     
     extrinsicStatistics(i, :) = [i, translationVector, rotationVector];
 end
+
+% Calibration target coordinates.
+targetStatistics = [ (1:length(cameraParameters.WorldPoints))'...
+    cameraParameters.WorldPoints, ...
+    zeros(length(cameraParameters.WorldPoints), 1) ];
+
+% Convert to tables.
+
+reprojectionStatistics = array2table(reprojectionStatistics);
+extrinsicStatistics = array2table(extrinsicStatistics);
+targetStatistics = array2table(targetStatistics);
+
+reprojectionStatistics.Properties.VariableNames = ...
+    [ "Image", "Point", "ErrorX", "ErrorY", "ErrorNorm", ...
+    "ReprojectedX", "ReprojectedY" ];
+extrinsicStatistics.Properties.VariableNames = ...
+    [ "Index", "TranslationX", "TranslationY", "TranslationZ", ...
+    "RodriguezAngleX", "RodriguezAngleY", "RodriguezAngleZ"];
+targetStatistics.Properties.VariableNames = ...
+    [ "Index", "CoordinateX" , "CoordinateY", "CoordinateZ" ];
+
 
 end

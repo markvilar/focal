@@ -1,18 +1,18 @@
-function SaveStereoCameraCalibration(directory, leftImages, ...
-    rightImages, stereoCamera, separator, optionDisplay)
-% Undistorts images using the camera model defined by cameraParameters.
-% 
-% :param directory: string, path to the output directory.
-% :param images: ImageDatastore, the image dataset.
-% :param stereoCamera: stereoParameters, the stereo camera model.
-% :param separator: char, the image file separator.
-% :param optionDisplay: bool, display image option.
+function WriteImagesToFile(directory, leftImages, rightImages, ...
+    usedImages, stereoCamera, optionDisplay)
+% Writes the name of a set of stereo image pairs to a file.
+%
+% :param directory: string, the root directory path.
+% :param leftImages: ImageDatastore object, the left camera images.
+% :param rightImages: ImageDatastore object, the right camera images.
+% :param stereoCamera: stereoParameters object, the stereo parameters.
+% :param optionDisplay: bool, whether or not to display images.
 
 %% Create directories.
-leftUndistortedImageDir = strcat(directory, 'left-undistorted');
-leftRectifiedImageDir = strcat(directory, 'left-rectified');
-rightUndistortedImageDir = strcat(directory, 'right-undistorted');
-rightRectifiedImageDir = strcat(directory, 'right-rectified');
+leftUndistortedImageDir = strcat(directory, "left-undistorted");
+leftRectifiedImageDir = strcat(directory, "left-rectified");
+rightUndistortedImageDir = strcat(directory, "right-undistorted");
+rightRectifiedImageDir = strcat(directory, "right-rectified");
 
 % Create directories.
 if ~exist(directory, "dir")
@@ -32,14 +32,27 @@ if ~exist(rightRectifiedImageDir, "dir")
 end
 
 assert(length(leftImages.Files) == length(rightImages.Files), ...
-    'The number of left and right images are not the same!');
+    "The number of left and right images are not the same!");
 
 numImagePairs = stereoCamera.NumPatterns;
 
+%% Save image names utilized for the calibration.
 
-%% Save images.
+imageStatistics = [num2cell(usedImages), leftImages.Files, rightImages.Files];
 
-% TODO: Save utilized images to txt file.
+for i=1:numImagePairs
+    leftImagePath = strsplit(imageStatistics{i, 2}, '/');
+    rightImagePath = strsplit(imageStatistics{i, 3}, '/');
+    imageStatistics(i, 2) = leftImagePath(end);
+    imageStatistics(i, 3) = rightImagePath(end);
+end
+
+imageTable = cell2table(imageStatistics);
+imageTable.Properties.VariableNames = [ "Used", "ImageLeft", ...
+    "ImageRight" ];
+writetable(imageTable, strcat(directory, "Calibration-Images.csv"));
+
+%% Save undistorted and rectified images.
 
 reverse = '';
 
@@ -50,15 +63,14 @@ end
 for i=1:numImagePairs
     % Progress bar.
     percent = 100 * i / numImagePairs;
-    message = sprintf(' - Saving images, percentage: %3.1f', percent);
+    message = sprintf(' %3.1f / 100', percent);
     fprintf([reverse, message]);
     reverse = repmat(sprintf('\b'), 1, length(message));
     
     % Extract image names.
     [leftImageName, extension] = ExtractImageName(leftImages.Files{i}, ...
-        separator);
-    [rightImageName, ~] = ExtractImageName(rightImages.Files{i}, ...
-        separator);
+        '/');
+    [rightImageName, ~] = ExtractImageName(rightImages.Files{i}, '/');
     
     % Load unrectified images.
     leftRawImage = imread(leftImages.Files{i});
@@ -101,34 +113,4 @@ for i=1:numImagePairs
     imwrite(rightRectifiedImage, strcat(rightRectifiedImageDir, ...
         "/", rightImageName, "-rectified", ".", extension));
 end
-
-%% Save camera parameters.
-fprintf('\n - Saving parameters...');
-
-% Camera intrinsics.
-WriteIntrinsicsToFile(strcat(directory, 'intrinsics-left.txt'), ...
-    stereoCamera.CameraParameters1.Intrinsics);
-WriteIntrinsicsToFile(strcat(directory, 'intrinsics-right.txt'), ...
-    stereoCamera.CameraParameters2.Intrinsics);
-
-% Stereo extrinsics.
-WriteExtrinsicsToFile(strcat(directory, 'extrinsics.txt'), ...
-    stereoCamera);
-
-%% Save reprojection errors.
-fprintf('\n - Saving statistics...\n');
-
-[leftReprojectionStatistics, leftExtrinsicStatistics] = ...
-    ExtractCalibrationStatistics(stereoCamera.CameraParameters1);
-[rightReprojectionStatistics, rightExtrinsicStatistics] = ...
-    ExtractCalibrationStatistics(stereoCamera.CameraParameters2);
-
-writematrix(leftReprojectionStatistics, ...
-    strcat(directory, 'reprojection-statistics-left.csv'));
-writematrix(leftExtrinsicStatistics, ...
-    strcat(directory, 'extrinsic-statistics-left.csv'));
-writematrix(rightReprojectionStatistics, ...
-    strcat(directory, 'reprojection-statistics-right.csv'));
-writematrix(rightExtrinsicStatistics, ...
-    strcat(directory, 'extrinsic-statistics-right.csv'));
 end

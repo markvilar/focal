@@ -7,6 +7,8 @@ import pyzed.sl as sl
 import numpy as np
 import cv2
 
+import utilities
+
 class AppType(enum.Enum):
 	LEFT_AND_RIGHT = 1
 	LEFT_AND_DEPTH = 2
@@ -136,7 +138,7 @@ def main():
 			
 			# Get SVO position and display progress.
 			svo_position = zed.get_svo_position()
-			progress_bar((svo_position + 1) / frames_total * 100, 30)
+			utilities.progress_bar((svo_position + 1) / frames_total * 100, 30)
 
 			# Check if we have reached the end of the video.
 			if svo_position >= (frames_total - 1): 

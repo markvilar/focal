@@ -2,18 +2,23 @@ import argparse
 
 from svo import SVOInspector
 
-def extract_images(svo_file: str, output_dir: str, start_index: int):
-	inspector = SVOInspector(svo_file, output_dir, start_index)
+def extract_images(svo_file: str, output_dir: str, start_index: int, \
+    save_right: bool):
+	inspector = SVOInspector(svo_file, output_dir, start_index, save_right)
 	inspector.inspect()
 
 def main():
-	parser = argparse.ArgumentParser(description="Inspect the video \
-		stream from a SVO file and store the marked images.")
-	parser.add_argument("-i", type=str, help="input svo")
-	parser.add_argument("-o", type=str, help="output folder")
-	parser.add_argument("-s", type=int, help="start index")
-	args = parser.parse_args()
-	extract_images(args.i, args.o, args.s)
+    parser = argparse.ArgumentParser(description="Inspect the video \
+        stream from a SVO file and store the marked images.")
+    parser.add_argument("-i", type=str, help="Input SVO file.")
+    parser.add_argument("-o", type=str, help="Output folder.")
+    parser.add_argument("-s", type=int, help="SVO start index.")
+    parser.add_argument("--save-right", dest="save_right", default=False, 
+        action="store_true")
+    parser.add_argument("--no-save-right", dest="save_right", 
+        action="store_false", help="Save right side images.")
+    args = parser.parse_args()
+    extract_images(args.i, args.o, args.s, args.save_right)
 
 if __name__ == '__main__':
 	main()
