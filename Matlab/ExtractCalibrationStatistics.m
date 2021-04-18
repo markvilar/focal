@@ -24,8 +24,8 @@ for i = 1:numberOfImages
     imageErrors = reprojectionErrors(:, :, i);
     imageErrorDistances = sqrt(sum(imageErrors.^2, 2));
     imageReprojections = reprojectedPoints(:, :, i);
-    imagePoints = (1:numberOfPoints)';
-    imageNumbers = repelem(i, numberOfPoints)';
+    imagePoints = (0:numberOfPoints-1)';
+    imageNumbers = repelem(i-1, numberOfPoints)';
     translationVector = translationVectors(i, :);
     rotationVector = rotationVectors(i, :);
     
@@ -34,11 +34,11 @@ for i = 1:numberOfImages
     reprojectionStatistics(offset+1:offset+stride, :) = [imageNumbers, ...
         imagePoints, imageErrors, imageErrorDistances, imageReprojections];
     
-    extrinsicStatistics(i, :) = [i, translationVector, rotationVector];
+    extrinsicStatistics(i, :) = [i-1, translationVector, rotationVector];
 end
 
 % Calibration target coordinates.
-targetStatistics = [ (1:length(cameraParameters.WorldPoints))'...
+targetStatistics = [ (0:length(cameraParameters.WorldPoints)-1)'...
     cameraParameters.WorldPoints, ...
     zeros(length(cameraParameters.WorldPoints), 1) ];
 

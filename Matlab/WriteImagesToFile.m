@@ -20,18 +20,19 @@ imageSizes = [ repmat(imageSize(2), numberOfImagePairs, 1), ...
 
 %% Save image names utilized for the calibration.
 
-imageStatistics = [ num2cell(usedImages), leftImages.Files, ...
-    rightImages.Files, num2cell(imageSizes) ];
+imageStatistics = [ num2cell((0:numberOfImagePairs-1)'), ...
+    num2cell(usedImages), leftImages.Files, rightImages.Files, ...
+    num2cell(imageSizes) ];
 
 for i=1:numberOfImagePairs
-    leftImagePath = strsplit(imageStatistics{i, 2}, '/');
-    rightImagePath = strsplit(imageStatistics{i, 3}, '/');
-    imageStatistics(i, 2) = leftImagePath(end);
-    imageStatistics(i, 3) = rightImagePath(end);
+    leftImagePath = strsplit(imageStatistics{i, 3}, '/');
+    rightImagePath = strsplit(imageStatistics{i, 4}, '/');
+    imageStatistics(i, 3) = leftImagePath(end);
+    imageStatistics(i, 4) = rightImagePath(end);
 end
 
 imageTable = cell2table(imageStatistics);
-imageTable.Properties.VariableNames = [ "Used", "Left", "Right", ...
+imageTable.Properties.VariableNames = [ "Index", "Used", "Left", "Right", ...
     "Width", "Height" ];
 writetable(imageTable, strcat(directory, "Calibration-Images.csv"));
 
