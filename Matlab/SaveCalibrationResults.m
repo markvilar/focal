@@ -1,19 +1,24 @@
 function SaveCalibrationResults(directory, leftImages, rightImages, ...
-    usedImages, stereoCamera, optionDisplay)
+    usedImages, model, errors, optionDisplayImages, ...
+    optionSaveImages)
 % Undistorts images using the camera model defined by cameraParameters.
 % 
 % :param directory: string, path to the output directory.
 % :param leftImages: ImageDatastore, the left images.
 % :param rightImages: ImageDatastore, the right images.
 % :param usedImages: boolean array, the images used for calibration.
-% :param stereoCamera: stereoParameters, the stereo camera model.
+% :param model: stereoParameters, the stereo camera model.
+% :param errors: stereoEstimationErrors, the estimation errors.
 % :param optionDisplay: bool, display image option.
 
-%% Save images.
-fprintf('\n - Saving images...');
+%% Create output directory.
+if ~exist(directory, "dir")
+    mkdir(directory);
+end
 
+%% Save images.
 WriteImagesToFile(directory, leftImages, rightImages, usedImages, ...
-    stereoCamera, optionDisplay);
+    model, optionDisplayImages, optionSaveImages);
 
 %% Save camera parameters.
 fprintf('\n - Saving parameters...');
@@ -21,23 +26,38 @@ fprintf('\n - Saving parameters...');
 % Camera intrinsics.
 WriteIntrinsicsToFile( ...
     strcat(directory, 'Intrinsic-Parameters-Left.txt'), ...
-    stereoCamera.CameraParameters1.Intrinsics);
+    model.CameraParameters1.Intrinsics, ...
+    errors.Camera1IntrinsicsErrors);
 WriteIntrinsicsToFile( ...
     strcat(directory, 'Intrinsic-Parameters-Right.txt'), ...
-    stereoCamera.CameraParameters2.Intrinsics);
+    model.CameraParameters2.Intrinsics, ...
+    errors.Camera2IntrinsicsErrors);
 
 % Stereo extrinsics.
 WriteExtrinsicsToFile(strcat(directory, 'Extrinsic-Parameters.txt'), ...
-    stereoCamera);
+    model, errors);
 
-%% Save reprojection errors and calibration target statistics.
+%% Save reprojection, extrinsic, and calibration target statistics.
 fprintf('\n - Saving statistics...\n');
 
 [leftReprojectionStats, leftExtrinsicsStats, targetCoordinates] = ...
-    ExtractCalibrationStatistics(stereoCamera.CameraParameters1);
+    ExtractCalibrationStatistics(model.CameraParameters1);
 [rightReprojectionStats, rightExtrinsicStats, ~] = ...
-    ExtractCalibrationStatistics(stereoCamera.CameraParameters2);
+    ExtractCalibrationStatistics(model.CameraParameters2);
 
+% .
+extrinsicErrors = errors.Camera1ExtrinsicsErrors;
+extrinsicErrorStats = array2table([ ...
+    (1:length(extrinsicErrors.TranslationVectorsError))' ...
+    extrinsicErrors.TranslationVectorsError, ...
+    extrinsicErrors.RotationVectorsError ]);
+
+extrinsicErrorStats.Properties.VariableNames = [ "Index", ...
+    "TranslationErrorX" , "TranslationErrorY", "TranslationErrorZ", ...
+    "RotationErrorX", "RotationErrorY", "RotationErrorZ" ];
+
+writetable(extrinsicErrorStats, ...
+    strcat(directory, "Extrinsic-Errors-Left.csv"));
 writetable(targetCoordinates, ...
     strcat(directory, "Calibration-Target.csv"));
 writetable(leftReprojectionStats, ...

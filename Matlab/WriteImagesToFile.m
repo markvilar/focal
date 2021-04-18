@@ -1,5 +1,5 @@
 function WriteImagesToFile(directory, leftImages, rightImages, ...
-    usedImages, stereoCamera, optionDisplay)
+    usedImages, stereoCamera, optionDisplay, optionSaveImages)
 % Writes the name of a set of stereo image pairs to a file.
 %
 % :param directory: string, the root directory path.
@@ -8,16 +8,48 @@ function WriteImagesToFile(directory, leftImages, rightImages, ...
 % :param stereoCamera: stereoParameters object, the stereo parameters.
 % :param optionDisplay: bool, whether or not to display images.
 
-%% Create directories.
+fprintf('\n - Saving image information...');
+
+assert(length(leftImages.Files) == length(rightImages.Files), ...
+    "The number of left and right images are not the same!");
+
+numberOfImagePairs = stereoCamera.NumPatterns;
+imageSize = stereoCamera.CameraParameters1.ImageSize;
+imageSizes = [ repmat(imageSize(2), numberOfImagePairs, 1), ...
+    repmat(imageSize(1), numberOfImagePairs, 1) ];
+
+%% Save image names utilized for the calibration.
+
+imageStatistics = [ num2cell(usedImages), leftImages.Files, ...
+    rightImages.Files, num2cell(imageSizes) ];
+
+for i=1:numberOfImagePairs
+    leftImagePath = strsplit(imageStatistics{i, 2}, '/');
+    rightImagePath = strsplit(imageStatistics{i, 3}, '/');
+    imageStatistics(i, 2) = leftImagePath(end);
+    imageStatistics(i, 3) = rightImagePath(end);
+end
+
+imageTable = cell2table(imageStatistics);
+imageTable.Properties.VariableNames = [ "Used", "Left", "Right", ...
+    "Width", "Height" ];
+writetable(imageTable, strcat(directory, "Calibration-Images.csv"));
+
+%% Save undistorted and rectified images.
+
+if ~optionSaveImages
+    return;
+end
+
+fprintf('\n - Saving images...');
+
+% Create directories.
 leftUndistortedImageDir = strcat(directory, "left-undistorted");
 leftRectifiedImageDir = strcat(directory, "left-rectified");
 rightUndistortedImageDir = strcat(directory, "right-undistorted");
 rightRectifiedImageDir = strcat(directory, "right-rectified");
 
-% Create directories.
-if ~exist(directory, "dir")
-    mkdir(directory);
-end
+% Create image directories.
 if ~exist(leftUndistortedImageDir, "dir")
     mkdir(leftUndistortedImageDir);
 end
@@ -31,38 +63,15 @@ if ~exist(rightRectifiedImageDir, "dir")
     mkdir(rightRectifiedImageDir);
 end
 
-assert(length(leftImages.Files) == length(rightImages.Files), ...
-    "The number of left and right images are not the same!");
-
-numImagePairs = stereoCamera.NumPatterns;
-
-%% Save image names utilized for the calibration.
-
-imageStatistics = [num2cell(usedImages), leftImages.Files, rightImages.Files];
-
-for i=1:numImagePairs
-    leftImagePath = strsplit(imageStatistics{i, 2}, '/');
-    rightImagePath = strsplit(imageStatistics{i, 3}, '/');
-    imageStatistics(i, 2) = leftImagePath(end);
-    imageStatistics(i, 3) = rightImagePath(end);
-end
-
-imageTable = cell2table(imageStatistics);
-imageTable.Properties.VariableNames = [ "Used", "ImageLeft", ...
-    "ImageRight" ];
-writetable(imageTable, strcat(directory, "Calibration-Images.csv"));
-
-%% Save undistorted and rectified images.
-
 reverse = '';
 
 if (optionDisplay)
     figure;
 end
 
-for i=1:numImagePairs
+for i=1:numberOfImagePairs
     % Progress bar.
-    percent = 100 * i / numImagePairs;
+    percent = 100 * i / numberOfImagePairs;
     message = sprintf(' %3.1f / 100', percent);
     fprintf([reverse, message]);
     reverse = repmat(sprintf('\b'), 1, length(message));
