@@ -1,7 +1,8 @@
 clear;
 clc;
 
-inputDirectory = "/home/martin/data/calibration-experiment/sequence-01/images/";
+inputDirectory = strcat("/home/martin/data/Calibration-Experiments/",
+    "Calibration-Images-01");
 
 % Set up image dataloaders.
 leftImages = imageDatastore(fullfile(inputDirectory, 'left', '*.png'));

@@ -16,13 +16,13 @@ fprintf(fileID, "Units: %s\n", extrinsics.WorldUnits);
 
 fprintf(fileID, "\n");
 fprintf(fileID, "Baseline vector:     [ %15.10f, %15.10f, %15.10f ]\n", ...
-    extrinsics.TranslationOfCamera2);
+    -extrinsics.TranslationOfCamera2);
 fprintf(fileID, "Rotation vector:     [ %15.10f, %15.10f, %15.10f ]\n", ...
-    rotationMatrixToVector(extrinsics.RotationOfCamera2));
+    rotationMatrixToVector(extrinsics.RotationOfCamera2'));
 
 fprintf(fileID, "\nRotation matrix:\n");
 fprintf(fileID, "                     [ %15.10f, %15.10f, %15.10f ]\n", ...
-    extrinsics.RotationOfCamera2);
+    extrinsics.RotationOfCamera2');
 
 fprintf(fileID, "\nEssential matrix:\n");
 fprintf(fileID, "                     [ %15.10f, %15.10f, %15.10f ]\n", ...
