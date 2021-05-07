@@ -6,7 +6,10 @@
 *.svo
 *.avi
 
+# Matlab autosave files.
+*.m~
+
 # Folders
-data/
-figures/
+Data/
+Output/
 __pycache__/

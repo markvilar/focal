@@ -1,23 +1,18 @@
+import enum
 import sys
+
+from pathlib import Path
+
 import pyzed.sl as sl
 import numpy as np
 import cv2
-from pathlib import Path
-import enum
 
+import utilities
 
 class AppType(enum.Enum):
 	LEFT_AND_RIGHT = 1
 	LEFT_AND_DEPTH = 2
 	LEFT_AND_DEPTH_16 = 3
-
-
-def progress_bar(percent_done, bar_length=50):
-	done_length = int(bar_length * percent_done / 100)
-	bar = '=' * done_length + '-' * (bar_length - done_length)
-	sys.stdout.write('[%s] %f%s\r' % (bar, percent_done, '%'))
-	sys.stdout.flush()
-
 
 def main():
 	if not sys.argv or len(sys.argv) != 4:
@@ -143,7 +138,7 @@ def main():
 			
 			# Get SVO position and display progress.
 			svo_position = zed.get_svo_position()
-			progress_bar((svo_position + 1) / frames_total * 100, 30)
+			utilities.progress_bar((svo_position + 1) / frames_total * 100, 30)
 
 			# Check if we have reached the end of the video.
 			if svo_position >= (frames_total - 1): 
