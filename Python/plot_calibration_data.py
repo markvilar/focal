@@ -18,7 +18,6 @@ class CalibrationDataConfiguration:
         self.data = data
         self.output = output
 
-
 def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     save_figures: bool=False, show_figures: bool=False):
     """
@@ -43,7 +42,7 @@ def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     ax1.scatter(left_errors[0, :], left_errors[1, :])
     el1 = statistics.covariance_ellipse(left_errors, ax1, 
         left_ellipse_scale, edgecolor="red", linestyle="--", \
-        label=r"$3 \cdot \sigma$")
+        label=r"3 std. dev.")
     ax1.plot(left_mean_error[0], left_mean_error[1], "r+", markersize=8, \
         label=r"Mean")
     ax1.set_xlim([-3, 3])
@@ -51,7 +50,11 @@ def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     ax1.set_xlabel(r"Reprojection error, $e_{\pi, x}$ $[\text{-}]$")
     ax1.set_ylabel(r"Reprojection error, $e_{\pi, y}$ $[\text{-}]$")
 
-    lg1 = ax1.legend(loc="lower left")
+    lg1 = ax1.legend(loc="upper right", bbox_to_anchor=(1.1, 1.1), \
+        frameon=True, fancybox=False)
+    fr1 = lg1.get_frame()
+    fr1.set_facecolor("white")
+    fr1.set_edgecolor("black")
 
     # Right reprojection errors.
     right_ellipse_scale = 3
@@ -65,7 +68,7 @@ def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     ax2.scatter(right_errors[0, :], right_errors[1, :])
     el2 = statistics.covariance_ellipse(right_errors, ax2, 
         right_ellipse_scale, edgecolor="red", linestyle="--", \
-        label=r"$3 \cdot \sigma$")
+        label=r"3 std. dev.")
     ax2.plot(right_mean_error[0], right_mean_error[1], "r+", markersize=8, \
         label=r"Mean")
     ax2.set_xlim([-3, 3])
@@ -73,7 +76,11 @@ def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     ax2.set_xlabel(r"Reprojection error, $e_{\pi, x}$ $[\text{-}]$")
     ax2.set_ylabel(r"Reprojection error, $e_{\pi, y}$ $[\text{-}]$")
 
-    lg2 = ax2.legend(loc="lower left")
+    lg2 = ax2.legend(loc="upper right", bbox_to_anchor=(1.1, 1.1), \
+        frameon=True, fancybox=False)
+    fr2 = lg2.get_frame()
+    fr2.set_facecolor("white")
+    fr2.set_edgecolor("black")
 
     # Mean reprojection error per image pair.
     left_image_indices = data["reprojections-left"]["Image"].to_numpy()
@@ -116,7 +123,12 @@ def plot_reprojection_statistics(config: CalibrationDataConfiguration,
     ax3.set_ylabel(r"Reprojection error, $e_{\pi}$ $[-]$")
     ax3.set_xticks(image_indices)
     ax3.set_xticklabels(image_labels)
-    ax3.legend()
+
+    lg3 = ax3.legend(loc="upper right", bbox_to_anchor=(1.05, 1.1), \
+        frameon=True, fancybox=False)
+    fr3 = lg3.get_frame()
+    fr3.set_facecolor("white")
+    fr3.set_edgecolor("black")
 
     # Reprojection statistics.
     image_width = data["images"]["Width"][0]
