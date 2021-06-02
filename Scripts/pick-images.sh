@@ -1,4 +1,5 @@
-python Python/extract_images.py                                            \
-    -i "/home/martin/data/ekne-survey/svo/Ekne-03.svo"                     \
-    -o "/home/martin/data/ekne-survey/synchronization/zed-camera/Extract/" \
-    -s 1500
+python Python/extract_images.py \
+    -i "/home/martin/Data/Ekne-Survey/SVO/Ekne-01.svo" \
+    -o "/home/martin/Data/Problematic-Images/" \
+    -s 8500 \
+    -b 51057.171 \

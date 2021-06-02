@@ -192,8 +192,8 @@ def main():
     save_figures = True
     show_figures = True
 
-    dataset_path = "./Data/Calibration-01/"
-    output_directory = "./Output/Calibration-Figures/Calibration-01/"
+    dataset_path = "./Data/Calibration-02/"
+    output_directory = "./Data/Output/Calibration-Figures/Calibration-02/"
 
     paths = {}
     paths["images"] = dataset_path + "Calibration-Images.csv"

@@ -14,6 +14,7 @@ pandas = "*"
 pyopengl = "*"
 pillow = ">=8.1.1"
 scipy = "*"
+scikit-image = "*"
 pyzed = {path = "./Lib/pyzed-3.3-cp38-cp38-linux_x86_64.whl"}
 
 [requires]

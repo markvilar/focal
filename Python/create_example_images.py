@@ -4,80 +4,107 @@ import matplotlib.pyplot as plt
 plt.style.use("./Styles/Scientific.mplstyle")
 
 import cv2
+import numpy as np
+
 from PIL import Image
+from skimage.metrics import structural_similarity as ssim
+
+from histogram import plot_histogram, plot_histogram_rgb
+
+def normalize_image(arr):
+    arrmin = np.min(arr)
+    arr -= arrmin
+    arrmax = np.max(arr)
+    arr *= 255.0 / arrmax
+    return arr
+
+def save_image(img, path, cmap=None, normalize=None):
+    fig, ax = plt.subplots()
+    ax.imshow(img, cmap, norm=normalize, resample=False)
+    ax.axis("off")
+    fig.tight_layout(pad=0.0)
+    fig.savefig(path, dpi=300, bbox_inches="tight")
 
 def main():
-    img_path = "./Data/Example-Images/1611262403339.png"
-    img_dl_path = "./Data/Example-Images/1611262403339-uienet.png"
+    img_path = "/home/martin/Data/Example-Images/1611262403339.png"
+    img_dl_path = "/home/martin/Data/Example-Images/1611262403339-uienet.png"
 
+    clahe_clip = 2.0
+    clahe_size = 20
+
+    blf_diameter = 10
+    blf_color = 60
+    blf_space = 20
+
+    # Load images.
     img = cv2.imread(img_path)
-    img_corrected = cv2.imread(img_dl_path)
+    img_uienet = cv2.imread(img_dl_path)
 
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img_corrected = cv2.cvtColor(img_corrected, cv2.COLOR_BGR2RGB)
+    # Convert color images.
+    rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    rgb_img_uienet = cv2.cvtColor(img_uienet, cv2.COLOR_BGR2RGB)
 
-    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray_img_he = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    gray_img_clahe = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    # Compute gray images.
+    img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2GRAY)
+    img_uienet = cv2.cvtColor(rgb_img_uienet, cv2.COLOR_RGB2GRAY)
 
-    clahe = cv2.createCLAHE(clipLimit=3, tileGridSize=(20, 20))
+    # Create CLAHE.
+    clahe = cv2.createCLAHE(clipLimit=clahe_clip, \
+        tileGridSize=(clahe_size, clahe_size))
 
-    gray_img_he = cv2.equalizeHist(gray_img_he)
-    gray_img_clahe = clahe.apply(gray_img_clahe)
+    # BLF filter.
+    img_blf = cv2.bilateralFilter(img, blf_diameter, \
+        blf_color, blf_space)
+    img_he = cv2.bilateralFilter(cv2.equalizeHist(img), blf_diameter, \
+        blf_color, blf_space)
+    img_clahe = cv2.bilateralFilter(clahe.apply(img), blf_diameter, \
+        blf_color, blf_space)
 
-    gray_img_filt = cv2.bilateralFilter(gray_img, 7, 60, 20)
-    gray_img_he_filt = cv2.bilateralFilter(gray_img_he, 7, 60, 20)
-    gray_img_clahe_filt = cv2.bilateralFilter(gray_img_clahe, 7, 60, 20)
+    # Compute difference image.
+    (_, ssi_blf) = ssim(img, img_blf, \
+        data_range=img_blf.max() - img_blf.min(), full=True)
+    (_, ssi_he) = ssim(img, img_he, \
+        data_range=img_he.max() - img_he.min(), full=True)
+    (_, ssi_clahe) = ssim(img, img_clahe, \
+        data_range=img_clahe.max() - img_clahe.min(), full=True)
+    (_, ssi_uienet) = ssim(img, img_uienet, \
+        data_range=img_uienet.max() - img_uienet.min(), full=True)
 
-    fig1, ax1 = plt.subplots()
-    ax1.imshow(img, resample=False)
-    ax1.axis("off")
+    # Calculate RGB image histograms.
+    hist_rgb = plot_histogram_rgb(rgb_img)
+    hist_rgb_uienet = plot_histogram_rgb(rgb_img_uienet)
 
-    fig2, ax2 = plt.subplots()
-    ax2.imshow(img_corrected, resample=False)
-    ax2.axis("off")
+    # Calculate grayscale image histograms.
+    hist = plot_histogram(img)
+    hist_blf = plot_histogram(img_blf)
+    hist_he = plot_histogram(img_he)
+    hist_clahe = plot_histogram(img_clahe)
+    hist_uienet = plot_histogram(img_uienet)
 
-    fig3, ax3 = plt.subplots()
-    ax3.imshow(gray_img, resample=False, cmap="gray")
-    ax3.axis("off")
+    hist_rgb.savefig("./Data/Output/Histogram-RGB.pdf", dpi=300)
+    hist_rgb_uienet.savefig("./Data/Output/Histogram-RGB-UIENet.pdf", dpi=300)
+    hist.savefig("./Data/Output/Histogram-Gray.pdf", dpi=300)
+    hist_blf.savefig("./Data/Output/Histogram-Gray-BLF.pdf", dpi=300)
+    hist_he.savefig("./Data/Output/Histogram-Gray-HE-BLF.pdf", dpi=300)
+    hist_clahe.savefig("./Data/Output/Histogram-Gray-CLAHE-BLF.pdf", dpi=300)
+    hist_uienet.savefig("./Data/Output/Histogram-Gray-UIENet-BLF.pdf", dpi=300)
 
-    fig4, ax4 = plt.subplots()
-    ax4.imshow(gray_img_he, resample=False, cmap="gray")
-    ax4.axis("off")
+    # Color images.
+    save_image(rgb_img, "./Data/Output/Image-Color.pdf")
+    save_image(rgb_img_uienet, "./Data/Output/Image-Color-UIENet.pdf")
 
-    fig5, ax5 = plt.subplots()
-    ax5.imshow(gray_img_clahe, resample=False, cmap="gray")
-    ax5.axis("off")
+    # Gray images.
+    save_image(img, "./Data/Output/Image-Gray.pdf", "gray")
+    save_image(img_blf, "./Data/Output/Image-Gray-BLF.pdf", "gray")
+    save_image(img_he, "./Data/Output/Image-Gray-HE-BLF.pdf", "gray")
+    save_image(img_clahe, "./Data/Output/Image-Gray-CLAHE-BLF.pdf", "gray")
+    save_image(img_uienet, "./Data/Output/Image-Gray-UIENet.pdf", "gray")
 
-    fig6, ax6 = plt.subplots()
-    ax6.imshow(gray_img_filt, resample=False, cmap="gray")
-    ax6.axis("off")
-
-    fig7, ax7 = plt.subplots()
-    ax7.imshow(gray_img_he_filt, resample=False, cmap="gray")
-    ax7.axis("off")
-
-    fig8, ax8 = plt.subplots()
-    ax8.imshow(gray_img_clahe_filt, resample=False, cmap="gray")
-    ax8.axis("off")
-
-    fig1.tight_layout(pad=0.0)
-    fig2.tight_layout(pad=0.0)
-    fig3.tight_layout(pad=0.0)
-    fig4.tight_layout(pad=0.0)
-    fig5.tight_layout(pad=0.0)
-    fig6.tight_layout(pad=0.0)
-    fig7.tight_layout(pad=0.0)
-    fig8.tight_layout(pad=0.0)
-
-    fig1.savefig("./Output/Image-Color.pdf", dpi=300, bbox_inches="tight")
-    fig2.savefig("./Output/Image-Color-UIENet.pdf", dpi=300, bbox_inches="tight")
-    fig3.savefig("./Output/Image-Gray.pdf", dpi=300, bbox_inches="tight")
-    fig4.savefig("./Output/Image-Gray-HE.pdf", dpi=300, bbox_inches="tight")
-    fig5.savefig("./Output/Image-Gray-CLAHE.pdf", dpi=300, bbox_inches="tight")
-    fig6.savefig("./Output/Image-Gray-Filtered.pdf", dpi=300, bbox_inches="tight")
-    fig7.savefig("./Output/Image-Gray-Filtered-HE.pdf", dpi=300, bbox_inches="tight")
-    fig8.savefig("./Output/Image-Gray-Filtered-CLAHE.pdf", dpi=300, bbox_inches="tight")
+    # Difference images.
+    save_image(ssi_blf, "./Data/Output/Image-SSI-BLF.pdf", "gray")
+    save_image(ssi_he, "./Data/Output/Image-SSI-HE-BLF.pdf", "gray")
+    save_image(ssi_clahe, "./Data/Output/Image-SSI-CLAHE-BLF.pdf", "gray")
+    save_image(ssi_uienet, "./Data/Output/Image-SSI-UIENet.pdf", "gray")
 
 if __name__ == "__main__":
     main()

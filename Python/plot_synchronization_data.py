@@ -42,21 +42,21 @@ def main():
     fig1, ax1 = plt.subplots(nrows=2, ncols=1, figsize=(7, 3.0))
     fig1.tight_layout(pad=2.0, w_pad=2.0, h_pad=2.0)
 
-    ax1[0].axhline(mean1, linestyle="-", color="b")
-    ax1[0].axhline(mean1 + std1, label=r"Mean $\pm$ std. dev.", linestyle="--", \
-        color="b")
-    ax1[0].axhline(mean1 - std1, linestyle="--", color="b")
-    ax1[0].scatter(time1, bias1, label="Samples")
+    ax1[0].axhline(mean1, linestyle="-", color="#e6091c")
+    ax1[0].axhline(mean1 + std1,  linestyle="--", color="#e6091c", \
+        label=r"Mean $\pm$ std. dev.",)
+    ax1[0].axhline(mean1 - std1, linestyle="--", color="#e6091c")
+    ax1[0].scatter(time1, bias1, label="Sync. points")
     ax1[0].set_xlabel(r"Time, $t$ $[\text{s}]$")
-    ax1[0].set_ylabel(r"Bias, dive 1, $t_{b}$ $[\text{s}]$")
+    ax1[0].set_ylabel(r"Bias, dive 1 $[\text{s}]$")
     ax1[0].set_ylim([ 51056.3, 51058.3 ])
 
-    ax1[1].axhline(mean2, linestyle="-", color="b")
-    ax1[1].axhline(mean2 + std2, linestyle="--", color="b")
-    ax1[1].axhline(mean2 - std2, linestyle="--", color="b")
+    ax1[1].axhline(mean2, linestyle="-", color="#e6091c")
+    ax1[1].axhline(mean2 + std2, linestyle="--", color="#e6091c")
+    ax1[1].axhline(mean2 - std2, linestyle="--", color="#e6091c")
     ax1[1].scatter(time2, bias2)
     ax1[1].set_xlabel(r"Time, $t$ $[\text{s}]$")
-    ax1[1].set_ylabel(r"Bias, dive 2, $t_{b}$ $[\text{s}]$")
+    ax1[1].set_ylabel(r"Bias, dive 2 $[\text{s}]$")
     ax1[1].set_ylim([ 54141, 54143 ])
 
     lg1 = fig1.legend(loc="upper right", bbox_to_anchor=(1.0, 1.0), \
