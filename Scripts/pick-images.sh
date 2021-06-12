@@ -1,5 +1,5 @@
 python Python/extract_images.py \
-    -i "/home/martin/Data/Ekne-Survey/SVO/Ekne-01.svo" \
-    -o "/home/martin/Data/Problematic-Images/" \
-    -s 8500 \
+    -i "/home/martin/Data/SVO/Ekne-01.svo" \
+    -o "/home/martin/Data/Loop-Closing/" \
+    -s 6800 \
     -b 51057.171 \
