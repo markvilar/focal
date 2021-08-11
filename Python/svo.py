@@ -11,8 +11,9 @@ import pyzed.sl as sl
 from utilities import progress_bar
 
 class SVOInspector(object):
-    def __init__(self, svo_file: str, output_dir: str, start_frame: int,
-        save_right: bool=False, display_size: Tuple[int, int]=(1600, 900)):
+    def __init__(self, svo_file: str, output_dir: str, start_frame: int, \
+        bias: float=0, save_right: bool=False, \
+        display_size: Tuple[int, int]=(1600, 900)):
         assert os.path.exists(svo_file), \
             "Input file does not exist."
         assert os.path.splitext(svo_file)[-1] == ".svo", \
@@ -23,10 +24,11 @@ class SVOInspector(object):
 		
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
-		
+
         self.svo_file = svo_file
         self.output_dir = output_dir
         self.start_frame = start_frame
+        self.bias = bias
         self.save_right = save_right
         self.display_size = display_size
 
@@ -92,12 +94,14 @@ class SVOInspector(object):
             # Display image.
             cv2.imshow("Left | Right", stereo_array)
 
+            time = ((timestamp.get_milliseconds() / 1000) + self.bias) * 1000
+
             if capturing:
-                cv2.imwrite("{0}{1}-left.png".format(self.output_dir, 
-                    timestamp.get_milliseconds()), left_array)
+                cv2.imwrite("{0}{1}-left.png".format(self.output_dir, time), \
+                    left_array)
             if capturing and self.save_right:
-                cv2.imwrite("{0}{1}-right.png".format(self.output_dir, 
-                    timestamp.get_milliseconds()), right_array)
+                cv2.imwrite("{0}{1}-right.png".format(self.output_dir, time), \
+                    right_array)
 
             key_code = cv2.waitKey(int(1000/self.camera_info.camera_fps))
 
