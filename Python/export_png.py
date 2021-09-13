@@ -8,7 +8,7 @@ import pyzed.sl as sl
 from utilities import progress_bar
 
 def export_png(svo_file: str, output_dir: str, start_frame: int, \
-    stop_frame: int, skip_frame: int):
+    stop_frame: int, skip_frame: int, rectify: bool):
     assert os.path.exists(svo_file), "Input file does not exist."
     assert os.path.splitext(svo_file)[-1] == ".svo", \
         "Input file is not a SVO file."
@@ -21,7 +21,14 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
 
     if not os.path.isdir(right_dir):
         os.mkdir(right_dir)
-   
+
+    if rectify:
+        left_image_type = sl.VIEW.LEFT
+        right_image_type = sl.VIEW.RIGHT
+    else:
+        left_image_type = sl.VIEW.LEFT_UNRECTIFIED
+        right_image_type = sl.VIEW.RIGHT_UNRECTIFIED
+
     init_params = sl.InitParameters()
     init_params.set_from_svo_file(svo_file)
     init_params.svo_real_time_mode = False
@@ -66,8 +73,8 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
         progress_bar((frame - start_frame) / (stop_frame - start_frame) * 100)
 
         # Get SVO images and timestamp.
-        zed.retrieve_image(left_image, sl.VIEW.LEFT_UNRECTIFIED)
-        zed.retrieve_image(right_image, sl.VIEW.RIGHT_UNRECTIFIED)
+        zed.retrieve_image(left_image, left_image_type)
+        zed.retrieve_image(right_image, right_image_type)
         timestamp = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE)
 
         # Get RGB images.
@@ -80,7 +87,7 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
         cv2.imwrite("{0}/{1}.png".format(left_dir, frame), left_array)
         cv2.imwrite("{0}/{1}.png".format(right_dir, frame), right_array)
 
-    # TODO: Save times to .txt file.
+    # Save times to .txt file.
     with open(output_dir + "/Timestamps.txt", "w") as f:
         f.write("{0}, {1}\n".format("Index", "Timestamp"))
         for frame, timestamp in timestamps:
@@ -94,9 +101,11 @@ def main():
     parser.add_argument("--start", type=int, help="Start index.")
     parser.add_argument("--stop", type=int, help="Stop index.")
     parser.add_argument("--skip", type=int, help="Index skip.")
+    parser.add_argument("--rectify", type=bool, help="Rectify images.")
     args = parser.parse_args()
 
-    export_png(args.input, args.output, args.start, args.stop, args.skip)
+    export_png(args.input, args.output, args.start, args.stop, args.skip, \
+        args.rectify)
 
 if __name__ == "__main__":
     main()
