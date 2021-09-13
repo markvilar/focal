@@ -1,4 +1,4 @@
 python Python/export_png.py \
-    --input "/home/martin/data/Ekne-Survey/SVO/Ekne-01.svo" \
-    --output "/home/martin/output/Images/Ekne-01/" \
-    --start 3500 --stop 20000 --skip 50 \
+    --input "/home/martin/Data/ZED/SVO/Ekne-01.svo" \
+    --output "/home/martin/Data/ZED/Images/" \
+    --start 2500 --stop 7000 --skip 50 \
