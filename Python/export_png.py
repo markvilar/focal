@@ -8,7 +8,7 @@ import pyzed.sl as sl
 from utilities import progress_bar
 
 def export_png(svo_file: str, output_dir: str, start_frame: int, \
-    stop_frame: int, skip_frame: int, rectify: bool):
+    stop_frame: int, skip_frame: int, rectify: bool, offset: int):
     assert os.path.exists(svo_file), "Input file does not exist."
     assert os.path.splitext(svo_file)[-1] == ".svo", \
         "Input file is not a SVO file."
@@ -46,7 +46,7 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
     zed.set_svo_position(start_frame)
 
     if stop_frame > frames_total:
-        stop_frame = frames_total
+        stop_frame = frames_total - 1
 
     # Allocate.
     left_image = sl.Mat()
@@ -60,11 +60,12 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
     running = True
     frame = 0
     timestamps = []
-    while frame <= stop_frame and frame < frames_total:
+    while frame < stop_frame and frame < frames_total:
         if zed.grab() != sl.ERROR_CODE.SUCCESS:
             continue
 
         frame = zed.get_svo_position()
+        index = frame + offset
 
         if (frame - start_frame) % skip_frame != 0:
             continue
@@ -81,31 +82,33 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
         left_array = left_image.get_data()[:, :, :3]
         right_array = right_image.get_data()[:, :, :3]
 
-        timestamps.append((frame, timestamp.get_milliseconds()))
+        timestamps.append((index, timestamp.get_milliseconds()))
 
         # Save images.
-        cv2.imwrite("{0}/{1}.png".format(left_dir, frame), left_array)
-        cv2.imwrite("{0}/{1}.png".format(right_dir, frame), right_array)
+        cv2.imwrite("{0}/{1}.png".format(left_dir, index), left_array)
+        cv2.imwrite("{0}/{1}.png".format(right_dir, index), right_array)
 
     # Save times to .txt file.
     with open(output_dir + "/Timestamps.txt", "w") as f:
         f.write("{0}, {1}\n".format("Index", "Timestamp"))
-        for frame, timestamp in timestamps:
-            f.write("{0}, {1}\n".format(frame, timestamp))
+        for index, timestamp in timestamps:
+            f.write("{0}, {1}\n".format(index, timestamp))
 
 def main():
     parser = argparse.ArgumentParser(description="Export the images from a \
         SVO file as PNG files.")
-    parser.add_argument("--input", type=str, help="Input SVO file.")
-    parser.add_argument("--output", type=str, help="Output directory.")
-    parser.add_argument("--start", type=int, help="Start index.")
-    parser.add_argument("--stop", type=int, help="Stop index.")
-    parser.add_argument("--skip", type=int, help="Index skip.")
+    parser.add_argument("--input",   type=str,  help="Input SVO file.")
+    parser.add_argument("--output",  type=str,  help="Output directory.")
+    parser.add_argument("--start",   type=int,  help="Start index.")
+    parser.add_argument("--stop",    type=int,  help="Stop index.")
+    parser.add_argument("--skip",    type=int,  help="Index skip.")
+    parser.add_argument("--offset",  type=int,  help="Frame index offset.", \
+        default=0)
     parser.add_argument("--rectify", type=bool, help="Rectify images.")
     args = parser.parse_args()
 
     export_png(args.input, args.output, args.start, args.stop, args.skip, \
-        args.rectify)
+        args.rectify, args.offset)
 
 if __name__ == "__main__":
     main()
