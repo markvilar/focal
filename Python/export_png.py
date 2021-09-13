@@ -12,10 +12,9 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
     assert os.path.exists(svo_file), "Input file does not exist."
     assert os.path.splitext(svo_file)[-1] == ".svo", \
         "Input file is not a SVO file."
-    assert output_dir[-1] == '/', "Output directory must end with '/'."
 
-    left_dir = output_dir + "Left/"
-    right_dir = output_dir + "Right/"
+    left_dir = output_dir + "Left"
+    right_dir = output_dir + "Right"
 
     if not os.path.isdir(left_dir):
         os.mkdir(left_dir)
@@ -53,6 +52,7 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
 
     running = True
     frame = 0
+    timestamps = []
     while frame <= stop_frame and frame < frames_total:
         if zed.grab() != sl.ERROR_CODE.SUCCESS:
             continue
@@ -74,11 +74,17 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
         left_array = left_image.get_data()[:, :, :3]
         right_array = right_image.get_data()[:, :, :3]
 
+        timestamps.append((frame, timestamp.get_milliseconds()))
+
         # Save images.
-        cv2.imwrite("{0}{1}.png".format(left_dir, \
-            timestamp.get_milliseconds()), left_array)
-        cv2.imwrite("{0}{1}.png".format(right_dir, \
-            timestamp.get_milliseconds()), right_array)
+        cv2.imwrite("{0}/{1}.png".format(left_dir, frame), left_array)
+        cv2.imwrite("{0}/{1}.png".format(right_dir, frame), right_array)
+
+    # TODO: Save times to .txt file.
+    with open(output_dir + "/Timestamps.txt", "w") as f:
+        f.write("{0}, {1}\n".format("Index", "Timestamp"))
+        for frame, timestamp in timestamps:
+            f.write("{0}, {1}\n".format(frame, timestamp))
 
 def main():
     parser = argparse.ArgumentParser(description="Export the images from a \

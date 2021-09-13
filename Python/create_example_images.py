@@ -26,8 +26,8 @@ def save_image(img, path, cmap=None, normalize=None):
     fig.savefig(path, dpi=300, bbox_inches="tight")
 
 def main():
-    img_path = "/home/martin/Data/Example-Images/1611262403339.png"
-    img_dl_path = "/home/martin/Data/Example-Images/1611262403339-uienet.png"
+    img_path = "/home/martin/Data/Example-Images/Image-Color.png"
+    img_dl_path = "/home/martin/Data/Example-Images/Image-Color-UIENet.png"
 
     clahe_clip = 2.0
     clahe_size = 20
@@ -81,30 +81,30 @@ def main():
     hist_clahe = plot_histogram(img_clahe)
     hist_uienet = plot_histogram(img_uienet)
 
-    hist_rgb.savefig("./Data/Output/Histogram-RGB.pdf", dpi=300)
-    hist_rgb_uienet.savefig("./Data/Output/Histogram-RGB-UIENet.pdf", dpi=300)
-    hist.savefig("./Data/Output/Histogram-Gray.pdf", dpi=300)
-    hist_blf.savefig("./Data/Output/Histogram-Gray-BLF.pdf", dpi=300)
-    hist_he.savefig("./Data/Output/Histogram-Gray-HE-BLF.pdf", dpi=300)
-    hist_clahe.savefig("./Data/Output/Histogram-Gray-CLAHE-BLF.pdf", dpi=300)
-    hist_uienet.savefig("./Data/Output/Histogram-Gray-UIENet-BLF.pdf", dpi=300)
+    hist_rgb.savefig("/home/martin/Data/Images/Histogram-RGB.png", dpi=300)
+    hist_rgb_uienet.savefig("/home/martin/Data/Images/Histogram-RGB-UIENet.png", dpi=300)
+    hist.savefig("/home/martin/Data/Images/Histogram-Gray.png", dpi=300)
+    hist_blf.savefig("/home/martin/Data/Images/Histogram-Gray-BLF.png", dpi=300)
+    hist_he.savefig("/home/martin/Data/Images/Histogram-Gray-HE-BLF.png", dpi=300)
+    hist_clahe.savefig("/home/martin/Data/Images/Histogram-Gray-CLAHE-BLF.png", dpi=300)
+    hist_uienet.savefig("/home/martin/Data/Images/Histogram-Gray-UIENet-BLF.png", dpi=300)
 
     # Color images.
-    save_image(rgb_img, "./Data/Output/Image-Color.pdf")
-    save_image(rgb_img_uienet, "./Data/Output/Image-Color-UIENet.pdf")
+    save_image(rgb_img, "/home/martin/Data/Images/Image-Color.png")
+    save_image(rgb_img_uienet, "/home/martin/Data/Images/Image-Color-UIENet.png")
 
     # Gray images.
-    save_image(img, "./Data/Output/Image-Gray.pdf", "gray")
-    save_image(img_blf, "./Data/Output/Image-Gray-BLF.pdf", "gray")
-    save_image(img_he, "./Data/Output/Image-Gray-HE-BLF.pdf", "gray")
-    save_image(img_clahe, "./Data/Output/Image-Gray-CLAHE-BLF.pdf", "gray")
-    save_image(img_uienet, "./Data/Output/Image-Gray-UIENet.pdf", "gray")
+    save_image(img, "/home/martin/Data/Images/Image-Gray.png", "gray")
+    save_image(img_blf, "/home/martin/Data/Images/Image-Gray-BLF.png", "gray")
+    save_image(img_he, "/home/martin/Data/Images/Image-Gray-HE-BLF.png", "gray")
+    save_image(img_clahe, "/home/martin/Data/Images/Image-Gray-CLAHE-BLF.png", "gray")
+    save_image(img_uienet, "/home/martin/Data/Images/Image-Gray-UIENet.png", "gray")
 
     # Difference images.
-    save_image(ssi_blf, "./Data/Output/Image-SSI-BLF.pdf", "gray")
-    save_image(ssi_he, "./Data/Output/Image-SSI-HE-BLF.pdf", "gray")
-    save_image(ssi_clahe, "./Data/Output/Image-SSI-CLAHE-BLF.pdf", "gray")
-    save_image(ssi_uienet, "./Data/Output/Image-SSI-UIENet.pdf", "gray")
+    save_image(ssi_blf, "/home/martin/Data/Images/Image-SSI-BLF.png", "gray")
+    save_image(ssi_he, "/home/martin/Data/Images/Image-SSI-HE-BLF.png", "gray")
+    save_image(ssi_clahe, "/home/martin/Data/Images/Image-SSI-CLAHE-BLF.png", "gray")
+    save_image(ssi_uienet, "/home/martin/Data/Images/Image-SSI-UIENet.png", "gray")
 
 if __name__ == "__main__":
     main()
