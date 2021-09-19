@@ -8,13 +8,23 @@ import pyzed.sl as sl
 from utilities import progress_bar
 
 def export_png(svo_file: str, output_dir: str, start_frame: int, \
-    stop_frame: int, skip_frame: int, rectify: bool, offset: int):
+    stop_frame: int, skip_frame: int, offset: int, stereo: bool, \
+    grayscale: bool, rectify: bool, preprocess: bool):
     assert os.path.exists(svo_file), "Input file does not exist."
     assert os.path.splitext(svo_file)[-1] == ".svo", \
         "Input file is not a SVO file."
 
-    left_dir = output_dir + "Left"
-    right_dir = output_dir + "Right"
+    # BLF parameters.
+    blf_radius = 10
+    blf_sigmar = 60
+    blf_sigmas = 20
+
+    if stereo:
+        left_dir = output_dir + "Left"
+        right_dir = output_dir + "Right"
+    else:
+        left_dir = output_dir
+        right_dir = output_dir
 
     if not os.path.isdir(left_dir):
         os.mkdir(left_dir)
@@ -22,17 +32,24 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
     if not os.path.isdir(right_dir):
         os.mkdir(right_dir)
 
-    if rectify:
+    if grayscale and rectify:
+        left_image_type = sl.VIEW.LEFT_GRAY
+        right_image_type = sl.VIEW.RIGHT_GRAY
+    elif grayscale and not rectify:
+        left_image_type = sl.VIEW.LEFT_UNRECTIFIED_GRAY
+        right_image_type = sl.VIEW.RIGHT_UNRECTIFIED_GRAY
+    elif not grayscale and rectify:
         left_image_type = sl.VIEW.LEFT
         right_image_type = sl.VIEW.RIGHT
-    else:
+    elif not grayscale and not rectify:
         left_image_type = sl.VIEW.LEFT_UNRECTIFIED
         right_image_type = sl.VIEW.RIGHT_UNRECTIFIED
 
     init_params = sl.InitParameters()
     init_params.set_from_svo_file(svo_file)
     init_params.svo_real_time_mode = False
-
+    
+    # Load SVO file.
     zed = sl.Camera()
     error = zed.open(init_params)
     if not error is sl.ERROR_CODE.SUCCESS:
@@ -60,7 +77,7 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
     running = True
     frame = 0
     timestamps = []
-    while frame < stop_frame and frame < frames_total:
+    while frame < stop_frame-1 and frame < frames_total-1:
         if zed.grab() != sl.ERROR_CODE.SUCCESS:
             continue
 
@@ -73,20 +90,30 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
         # Show progress bar.
         progress_bar((frame - start_frame) / (stop_frame - start_frame) * 100)
 
-        # Get SVO images and timestamp.
-        zed.retrieve_image(left_image, left_image_type)
-        zed.retrieve_image(right_image, right_image_type)
+        # Get timestamp.
         timestamp = zed.get_timestamp(sl.TIME_REFERENCE.IMAGE)
-
-        # Get RGB images.
-        left_array = left_image.get_data()[:, :, :3]
-        right_array = right_image.get_data()[:, :, :3]
-
         timestamps.append((index, timestamp.get_milliseconds()))
 
-        # Save images.
-        cv2.imwrite("{0}/{1}.png".format(left_dir, index), left_array)
-        cv2.imwrite("{0}/{1}.png".format(right_dir, index), right_array)
+        # Get the left image.
+        zed.retrieve_image(left_image, left_image_type)
+        left_array = left_image.get_data()
+        if preprocess:
+            left = cv2.bilateralFilter(left_array, blf_radius, \
+                blf_sigmar, blf_sigmas)
+        else:
+            left = left_array
+        cv2.imwrite("{0}/{1}.png".format(left_dir, index), left)
+
+        # If stereo, get the right image.
+        if stereo:
+            zed.retrieve_image(right_image, right_image_type)
+            right_array = right_image.get_data()
+            if preprocess:
+                right = cv2.bilateralFilter(right_array, blf_radius, \
+                    blf_sigmar, blf_sigmas)
+            else:
+                right = right_array
+            cv2.imwrite("{0}/{1}.png".format(right_dir, index), right)    
 
     # Save times to .txt file.
     with open(output_dir + "/Timestamps.txt", "w") as f:
@@ -97,18 +124,31 @@ def export_png(svo_file: str, output_dir: str, start_frame: int, \
 def main():
     parser = argparse.ArgumentParser(description="Export the images from a \
         SVO file as PNG files.")
-    parser.add_argument("--input",   type=str,  help="Input SVO file.")
-    parser.add_argument("--output",  type=str,  help="Output directory.")
-    parser.add_argument("--start",   type=int,  help="Start index.")
-    parser.add_argument("--stop",    type=int,  help="Stop index.")
-    parser.add_argument("--skip",    type=int,  help="Index skip.")
-    parser.add_argument("--offset",  type=int,  help="Frame index offset.", \
-        default=0)
-    parser.add_argument("--rectify", type=bool, help="Rectify images.")
+    parser.add_argument("--input", type=str, \
+        help="Input SVO file.")
+    parser.add_argument("--output", type=str, \
+        help="Output directory.")
+    parser.add_argument("--start", type=int, \
+        help="Start index.")
+    parser.add_argument("--stop", type=int, \
+        help="Stop index.")
+    parser.add_argument("--skip", type=int, \
+        help="Index skip.")
+    parser.add_argument("--offset", type=int, default=0, \
+        help="Frame index offset.")
+    parser.add_argument("--stereo", type=bool, default=False, \
+        help="Extract stereo images.")
+    parser.add_argument("--grayscale", type=bool, default=True, \
+        help="Extract grayscale images.")
+    parser.add_argument("--rectify", type=bool, default=True, \
+        help="Rectify images.")
+    parser.add_argument("--preprocess", type=bool, default=True, \
+        help="Preprocess images.")
     args = parser.parse_args()
 
     export_png(args.input, args.output, args.start, args.stop, args.skip, \
-        args.rectify, args.offset)
+        args.offset, args.stereo, args.grayscale, args.rectify, \
+        args.preprocess)
 
 if __name__ == "__main__":
     main()
