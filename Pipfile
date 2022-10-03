@@ -15,7 +15,7 @@ pandas = "*"
 pyopengl = "*"
 scipy = "*"
 scikit-image = "*"
-pyzed = {path = "./Lib/pyzed-3.5-cp38-cp38-linux_x86_64.whl"}
+pyzed = {path = "./lib/pyzed-3.7-cp38-cp38-linux_x86_64.whl"}
 
 [requires]
 python_version = "3.8"

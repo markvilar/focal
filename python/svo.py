@@ -2,6 +2,8 @@ import enum
 import os
 import sys
 
+from pathlib import Path
+
 from typing import Tuple
 
 import cv2
@@ -12,8 +14,7 @@ from utilities import progress_bar
 
 class SVOInspector(object):
     def __init__(self, svo_file: str, output_dir: str, start_frame: int, \
-        bias: float=0, save_right: bool=False, \
-        display_size: Tuple[int, int]=(1600, 900)):
+        bias: float=0, display_size: Tuple[int, int]=(1600, 900)):
         assert os.path.exists(svo_file), \
             "Input file does not exist."
         assert os.path.splitext(svo_file)[-1] == ".svo", \
@@ -22,14 +23,24 @@ class SVOInspector(object):
             "Output directory must end with '/'."
         assert start_frame >= 0, "Start index must be zero or larger."
 		
-        if not os.path.isdir(output_dir):
+        output_dir = Path(output_dir)
+        left_dir = output_dir / "left"
+        right_dir = output_dir / "right"
+
+        if not os.path.exists(output_dir):
             os.mkdir(output_dir)
+        if not os.path.exists(left_dir):
+            os.mkdir(left_dir)
+        if not os.path.exists(right_dir):
+            os.mkdir(right_dir)
+
+        self.output_dir = output_dir
+        self.left_dir = left_dir
+        self.right_dir = right_dir
 
         self.svo_file = svo_file
-        self.output_dir = output_dir
         self.start_frame = start_frame
         self.bias = bias
-        self.save_right = save_right
         self.display_size = display_size
 
         self.camera_info = None
@@ -37,7 +48,6 @@ class SVOInspector(object):
         self.init_params = sl.InitParameters()
         self.init_params.set_from_svo_file(self.svo_file)
         self.init_params.svo_real_time_mode = False
-        self.init_params.coordinate_units = sl.UNIT.MILLIMETER
 
     def inspect(self):
         # Open SVO.
@@ -94,13 +104,13 @@ class SVOInspector(object):
             # Display image.
             cv2.imshow("Left | Right", stereo_array)
 
+            
             time = ((timestamp.get_milliseconds() / 1000) + self.bias) * 1000
 
             if capturing:
-                cv2.imwrite("{0}{1}-left.png".format(self.output_dir, time), \
+                cv2.imwrite("{0}/{1}.png".format(self.left_dir, time), \
                     left_array)
-            if capturing and self.save_right:
-                cv2.imwrite("{0}{1}-right.png".format(self.output_dir, time), \
+                cv2.imwrite("{0}/{1}.png".format(self.right_dir, time), \
                     right_array)
 
             key_code = cv2.waitKey(int(1000/self.camera_info.camera_fps))
