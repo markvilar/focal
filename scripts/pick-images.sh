@@ -7,7 +7,6 @@ DATA_DIR="/home/martin/data"
 # 20220923_135839.svo -  720 (far, flip)
 # 20220923_140554.svo - 1080 (far, flip)
 
-
 python python/extract_images.py \
     -i "$DATA_DIR/20220923_134431.svo" \
     -o "$DATA_DIR/1080/" \

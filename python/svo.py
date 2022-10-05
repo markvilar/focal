@@ -6,6 +6,7 @@ from pathlib import Path
 
 from typing import Tuple
 
+import arrow
 import cv2
 import numpy as np
 import pyzed.sl as sl
@@ -14,7 +15,7 @@ from utilities import progress_bar
 
 class SVOInspector(object):
     def __init__(self, svo_file: str, output_dir: str, start_frame: int, \
-        bias: float=0, display_size: Tuple[int, int]=(1600, 900)):
+        offset: float=0, display_size: Tuple[int, int]=(1600, 900)):
         assert os.path.exists(svo_file), \
             "Input file does not exist."
         assert os.path.splitext(svo_file)[-1] == ".svo", \
@@ -38,9 +39,11 @@ class SVOInspector(object):
         self.left_dir = left_dir
         self.right_dir = right_dir
 
+        self.display_fps = 30
+
         self.svo_file = svo_file
         self.start_frame = start_frame
-        self.bias = bias
+        self.offset = offset
         self.display_size = display_size
 
         self.camera_info = None
@@ -60,7 +63,7 @@ class SVOInspector(object):
 
         # Get SVO information and set SVO position.
         self.camera_info = zed.get_camera_information()
-        total_frames = zed.get_svo_number_of_frames()
+        total_frames = zed.get_svo_number_of_frames() - 1
         if self.start_frame < total_frames:
             zed.set_svo_position(self.start_frame)
 
@@ -77,7 +80,7 @@ class SVOInspector(object):
         left_image = sl.Mat()
         right_image = sl.Mat()
 
-        capturing = False
+        capture = False
         running = True
         while running:
             if zed.grab() != sl.ERROR_CODE.SUCCESS:
@@ -95,46 +98,40 @@ class SVOInspector(object):
             right_array = right_image.get_data()
 
             # Concatenate images.
-            stereo_array = np.concatenate((left_array, right_array),
-                axis=1)
+            stereo_array = np.concatenate((left_array, right_array), axis=1)
 
             # Resize stereo image to fit on screen.
             stereo_array = cv2.resize(stereo_array, new_size)
 
             # Display image.
             cv2.imshow("Left | Right", stereo_array)
-
             
-            time = ((timestamp.get_milliseconds() / 1000) + self.bias) * 1000
+            # Create timestamp
+            timestamp = float((timestamp.get_milliseconds() / 1000) 
+                + self.offset)
+            datetime = arrow.Arrow.fromtimestamp(timestamp)
+            time_string = datetime.strftime("%Y%m%d_%H%M%S_%f")
 
-            if capturing:
-                cv2.imwrite("{0}/{1}.png".format(self.left_dir, time), \
-                    left_array)
-                cv2.imwrite("{0}/{1}.png".format(self.right_dir, time), \
-                    right_array)
+            left_path = self.left_dir / Path(time_string + ".png")
+            right_path = self.right_dir / Path(time_string + ".png")
 
-            key_code = cv2.waitKey(int(1000/self.camera_info.camera_fps))
+            if capture:
+                cv2.imwrite(str(left_path), left_array)
+                cv2.imwrite(str(right_path), right_array)
+
+            key_code = cv2.waitKey(int(1000 / self.display_fps))
 
             if key_code == 32: # Spacebar
-                capturing = not capturing
-                if capturing:
-                    sys.stdout.write("Saving images...\n")
+                capture = True
+                if capture:
+                    sys.stdout.write("Saving image...\n")
                     sys.stdout.flush()
                 else:
-                    sys.stdout.write("Stopped saving images...\n")
+                    sys.stdout.write("Not saving image...\n")
                     sys.stdout.flush()
             elif key_code == 27 or frame == total_frames:
                 running = False
             elif key_code == -1:
+                capture = False
                 continue
-			
         cv2.destroyAllWindows()
-
-class Format(enum.Enum):
-    Default = 1
-
-def format_from_string(string: str) -> Format:
-    if string == "Default":
-        return Format.Default
-    else:
-        return None
