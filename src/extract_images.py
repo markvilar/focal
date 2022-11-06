@@ -1,6 +1,6 @@
 import argparse
 
-from svo import SVOInspector
+from zed.svo import SVOInspector
 
 def extract_images(svo_file: str, output_dir: str, start_index: int, \
     bias: float, save_right: bool):

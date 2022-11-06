@@ -8,8 +8,6 @@ import cv2
 import numpy as np
 import pyzed.sl as sl
 
-from utilities import progress_bar
-
 def export_png(svo_file: str, output_dir: str, start_frame: int, \
     stop_frame: int, skip_frame: int, offset: int, stereo: bool, \
     grayscale: bool, rectify: bool, preprocess: bool):
