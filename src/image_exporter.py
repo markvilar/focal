@@ -4,7 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-from image import types
+import tqdm
+
+from image import types, io
 from zed.dataloaders import FrameLoader
 
 @dataclass
@@ -39,14 +41,25 @@ def export(arguments: ExportArguments) -> None:
     """ """
     loader = FrameLoader(filepath=arguments.input, 
         index=arguments.start,
+        stop=arguments.stop,
         step=arguments.step)
 
     loader.prepare()
 
-    time, left, right = loader.load_frame()
-    print(time)
-    input()
+    n = int((arguments.stop - arguments.start) / arguments.step)
 
+    with tqdm.tqdm(total=n) as bar:
+        while loader.has_frame():
+            index, time, left, right = loader.load_frame()
+
+            filename = time.format('YYYYMMDD_HHmmss_SSS') + ".jpg"
+            left_dir = arguments.output / "left"
+            right_dir = arguments.output / "right"
+
+            io.save_image(left, left_dir / filename)
+            io.save_image(right, right_dir / filename)
+
+            bar.update(1)
 
 def main():
     parser = argparse.ArgumentParser(
@@ -58,6 +71,8 @@ def main():
     parser.add_argument("--step", type=int, default=1, help="frame step")
     parser.add_argument('--stereo', default=False, action='store_true')
     parser.add_argument('--no-stereo', dest='stereo', action='store_false')
+
+    # /home/martin/data/20221031_skarnsundet/stereo/20221102_142759.svo
 
     arguments = process_arguments(parser.parse_args())
 

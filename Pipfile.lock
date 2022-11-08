@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fabfbfe36a00df5449b8065575d5d132ce993a9246af441e465cdb8808c89c85"
+            "sha256": "f854fd7444598791d507a2075f69ff2fbcafa6e0d1b0cf3b34973a0ea4188a1b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -163,11 +163,11 @@
         },
         "imageio": {
             "hashes": [
-                "sha256:63f007b7f2a082306e36922b3fd529a7aa305d2b78f46195bab8e22bbfe866e9",
-                "sha256:a4b88f9f3d428b8c0ceeb7e297df8c346a642bb7e3111743eb85717d60b26f6f"
+                "sha256:0fae027addf02bc89c73a56cc157ad84557f8b8b84aa19b4cb706fefca2d88ff",
+                "sha256:bb173f8af27e4921f59539c4d45068fcedb892e58261fce8253f31c9a0ff9ccf"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.22.3"
+            "version": "==2.22.4"
         },
         "kiwisolver": {
             "hashes": [
@@ -531,10 +531,10 @@
         },
         "pyzed": {
             "hashes": [
-                "sha256:0b28b62a7d8361a6f2459f5fbc81e63e41dab3c0547b86d3885918ff9f7842c4"
+                "sha256:38953daa395c11b7566b0357832990bd4a284d124f1de94d4985e884ff09b4e6"
             ],
-            "path": "./lib/pyzed-3.8-cp38-cp38-linux_x86_64.whl",
-            "version": "==3.8"
+            "path": "./lib/pyzed-3.7-cp38-cp38-linux_x86_64.whl",
+            "version": "==3.7"
         },
         "scikit-image": {
             "hashes": [
@@ -618,6 +618,13 @@
             ],
             "index": "pypi",
             "version": "==4.64.1"
+        },
+        "utm": {
+            "hashes": [
+                "sha256:3c9a3650e98bb6eecec535418d0dfd4db8f88c8ceaca112a0ff0787e116566e2"
+            ],
+            "index": "pypi",
+            "version": "==0.7.0"
         }
     },
     "develop": {}
