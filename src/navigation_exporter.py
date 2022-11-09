@@ -7,24 +7,29 @@ import pandas as pd
 import tqdm
 
 from nav import naviwrap
-
+from nav.sensors import ApsParser, CompassParser
 
 def export(paths: List[Path]) -> None:
     """ """
     for path in paths:
-        reader = naviwrap.SurveyLogReader()
-        samples = reader.read(path, skip=51)
+        header, samples = naviwrap.read_survey_log(path, skip=51)
+        print(header)
+        print("Samples: {0}".format(len(samples)))
 
-        hipap_formatter = naviwrap.HipapFormatter(zone=32, letter="N")
-        compass_formatter = naviwrap.CompassFormatter()
+        position_formatter = ApsParser(zone=32, letter="N")
+        gyro_formatter = CompassParser()
 
         for sample in tqdm.tqdm(samples, desc="Processing navigation log..."):
-            hipap_formatter.insert(sample)
-            compass_formatter.insert(sample)
+            # TODO: Process samples
+            position_formatter.parse(sample)
+            gyro_formatter.parse(sample)
 
-        print(hipap_formatter.get_data())
-        print(compass_formatter.get_data())
         input()
+
+        # TODO: Filter
+        # TODO: Merge sensors
+    
+    # TODO: Merge logs to navigation table
 
 def process_arguments(args):
     paths = list()

@@ -1,96 +1,77 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Protocol, Tuple
+from typing import List, Tuple
 
-import arrow
 import pandas as pd
 import tqdm
-import utm
 
-class SampleFormatter(Protocol):
-    def is_valid(self, sample: List[str]) -> bool:
-        ...
+#NOTE: From 2016 survey log:
+"""
+H0; P; O; no; Time; E; N; height; stddev; ; ; ; kp; dal; dol; fix /H0
+H0; P; D; no; Time; E; N; height; stddev; dx; dy; dz; kp; dal; dol /H0
+H0; D; no; insttype; index; channel_number; Time; BathyDepth; NumOfDepths; 
+    Depth1; TimeAge1../H0
+H0; A; no; index; Time; Roll; Pitch; Heave /H0
+H0; G; no; index;  type; Time; Gyro; CMG /H0
+"""
 
-    def insert(self, sample: List[str]) -> None:
-        ...
-
-    def get_data(self) -> pd.DataFrame:
-        ...
+@dataclass
+class SurveyLogHeader():
+    # TODO: Implement
+    pass
 
 
 @dataclass
-class SurveyLogReader():
-
-    def read(self, path: Path, skip: int=0) -> List[List[str]]:
-        """ """
-        # Open and read file
-        lines = []
-        with open(path, "r", encoding="utf8", errors="ignore") as handle:
-            lines = handle.readlines()
-
-        assert skip < len(lines), "skip is out of bounds of lines"
-        lines = lines[skip:]
-        for index, line in enumerate(lines):
-            lines[index] = [word.strip() for word in line.split(";")]
-        return lines
+class SurveyLogSample():
+    type: str
+    source: int
+    time: str
+    data: List[str] = field(default_factory=list())
 
 
-@dataclass
-class HipapFormatter():
-    zone: int
-    letter: str
-    time_format: str="YYYY:MM:DD:HH:mm:ss.SSS"
-    data: pd.DataFrame = pd.DataFrame(columns=["datetime", "latitude", 
-        "longitude", "down", "easting", "northing", "zone", "letter"])
-
-    def is_valid(self, sample: List[str]) -> bool:
-        return len(sample) == 16 and sample[0] == "P" and sample[1] == "X" \
-            and sample[2] == "802"
-
-    def insert(self, sample: List[str]) -> None:
-        """ """
-        if not self.is_valid(sample):
-            return
-        datetime = arrow.get(sample[3], self.time_format)
-        easting = float(sample[4])
-        northing = float(sample[5])
-        down = float(sample[6])
-        latitude, longitude = utm.to_latlon(easting, northing, self.zone, 
-            self.letter)
-        self.data.loc[len(self.data)] = {
-                "datetime"  : datetime,
-                "latitude"  : latitude,
-                "longitude" : longitude,
-                "down"      : down,
-                "easting"   : easting,
-                "northing"  : northing,
-                "zone"      : self.zone,
-                "letter"    : self.letter,
-            }
-
-    def get_data(self) -> pd.DataFrame:
-        return self.data
+def format_sample(line: List[str]) -> SurveyLogSample:
+    """ Formats a list of strings to Navipac survey samples. """
+    stripped = [word.strip() for word in line.split(";")]
+    if len(stripped) < 4:
+        return None
+    
+    type = stripped[0]
+    if type == "P":
+        sample = SurveyLogSample(type=type, source=int(stripped[2]), 
+            time=stripped[3], data=stripped[4:])
+    elif type == "S":
+        sample = SurveyLogSample(type=type, source=int(stripped[1]), 
+            time=stripped[2], data=stripped[3:])
+    elif type == "G":
+        sample = SurveyLogSample(type=type, source=int(stripped[1]), 
+            time=stripped[3], data=stripped[4:])
+    elif type == "V":
+        sample = SurveyLogSample(type=type, source=int(stripped[2]), 
+            time=stripped[3], data=stripped[4:])
+    else:
+        return None
+    return sample
 
 
-@dataclass
-class CompassFormatter():
-    time_format: str="YYYY:MM:DD:HH:mm:ss.SSS"
-    data: pd.DataFrame = pd.DataFrame(columns=["datetime", "heading"])
+def read_survey_log(path: Path, skip: int=0) \
+    -> Tuple[SurveyLogHeader, List[SurveyLogSample]]:
+    """ Reads a Navipac survey log and returns the header information and
+    data samples."""
+    # Open and read file
+    lines = []
+    with open(path, "r", encoding="utf8", errors="ignore") as handle:
+        lines = handle.readlines()
 
-    def is_valid(self, sample: List[str]) -> bool:
-        return len(sample) == 6 and sample[0] == "G" and sample[1] == "52" \
-            and sample[2] == "2"
+    assert skip < len(lines), "skip is out of bounds of lines"
+    header_lines = lines[:skip]
+    sample_lines = lines[skip:]
+    
+    # TODO: Process header
 
-    def insert(self, sample: List[str]) -> None:
-        """ """
-        if not self.is_valid(sample): 
-            return
-        datetime = arrow.get(sample[3], self.time_format)
-        heading = float(sample[4])
-        self.data.loc[len(self.data)] = {
-                "datetime" : datetime, 
-                "heading"  : heading
-            }
-
-    def get_data(self) -> pd.DataFrame:
-        return self.data
+    # Process samples
+    samples = []
+    for index, line in tqdm.tqdm(enumerate(sample_lines), 
+        desc="Reading log samples..."):
+        sample = format_sample(line)
+        if sample: samples.append(sample)
+    return (SurveyLogHeader(), samples)
