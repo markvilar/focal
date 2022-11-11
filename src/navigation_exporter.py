@@ -6,21 +6,24 @@ from typing import List
 import pandas as pd
 import tqdm
 
-from nav import naviwrap
+from nav.naviwrap import read_survey_log
 from nav.sensors import ApsParser, CompassParser
 
 def export(paths: List[Path]) -> None:
     """ """
     for path in paths:
+        # NOTE: Set up proper reading of log header
         header, samples = naviwrap.read_survey_log(path, skip=51)
         print(header)
         print("Samples: {0}".format(len(samples)))
 
+        # NOTE: Revise sensor collectors for position and heading. Can also
+        # include position, heading, depth and altitude from the old setup.
         position_formatter = ApsParser(zone=32, letter="N")
         gyro_formatter = CompassParser()
 
+        # TODO: Collect samples
         for sample in tqdm.tqdm(samples, desc="Processing navigation log..."):
-            # TODO: Process samples
             position_formatter.parse(sample)
             gyro_formatter.parse(sample)
 
