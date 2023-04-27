@@ -11,8 +11,6 @@ import cv2
 import numpy as np
 import pyzed.sl as sl
 
-from utilities import progress_bar
-
 class SVOInspector(object):
     def __init__(self, svo_file: str, output_dir: str, start_frame: int, \
         offset: float=0, display_size: Tuple[int, int]=(1600, 900)):
