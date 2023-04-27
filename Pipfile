@@ -6,16 +6,20 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+arrow = "*"
 cython = ">=0.26"
 matplotlib = "*"
 numpy = ">=1.13"
 opencv-python = ">=4.5.0"
+opencv-contrib-python = ">=4.5.0"
 pandas = "*"
 pyopengl = "*"
-pillow = ">=8.3.2"
 scipy = "*"
 scikit-image = "*"
-pyzed = {path = "./Lib/pyzed-3.5-cp38-cp38-linux_x86_64.whl"}
+tqdm = "*"
+utm = "*"
+pyzed = {path = "./lib/pyzed-3.7-cp38-cp38-linux_x86_64.whl"}
+#pyzed = {path = "./lib/pyzed-3.8-cp38-cp38-linux_x86_64.whl"}
 
 [requires]
 python_version = "3.8"
